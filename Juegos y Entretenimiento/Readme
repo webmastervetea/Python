@@ -1,0 +1,15 @@
+Aplicaciones en python
+ 
+🎲 Juegos y Entretenimiento
+	JYE-1. **Juego de adivinanza de números:** El usuario intenta adivinar un número secreto.
+	JYE-2. **Piedra, Papel o Tijera:** Un juego simple contra la computadora.
+	JYE-3. **Ahorcado (Hangman):** Implementación de la clásica adivinanza de palabras.
+	JYE-4. **Generador de contraseñas:** Crea contraseñas seguras y aleatorias (con el módulo `secrets`).
+	JYE-5. **Lanzador de dados (Dice Roll Simulator):** Simula el lanzamiento de uno o varios dados.
+	JYE-6. **Generador de historias aleatorias:** Combina frases o palabras predefinidas para crear textos absurdos.
+	JYE-7. **Calculadora de propinas:** Calcula cuánto dejar de propina y el total por persona.
+	JYE-8. **Juego de Tic-Tac-Toe (Gato):** Implementación para dos jugadores o contra la IA.
+	JYE-9. **Generador de nombres de usuario:** Crea combinaciones únicas basadas en la entrada del usuario.
+	JYE-10. **Trivia simple:** Un juego de preguntas y respuestas con puntuación.
+ 
+Soporte: https://www.linkedin.com/in/oscarlizarragag/
