@@ -26,8 +26,8 @@ cd nombre-del-repositorio
 #### Ejemplo: Instalación de dependencias para un script
 #### pip install -r requirements.txt
 
-#### Todas las categorias de Colección de Scripts y Aplicaciones en Python estan en CATEGORIAS.MD
-[CATEGORIAS.MD]([https://github.com/tu-usuario/nombre-del-repo](https://github.com/webmastervetea/Python/blob/main/CATEGORIAS.md))
+#### Todas las categorias de Colección de Scripts y Aplicaciones en Python estan en 
+https://github.com/tu-usuario/nombre-del-repo](https://github.com/webmastervetea/Python/blob/main/CATEGORIAS.md
 
 
 
