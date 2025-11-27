@@ -27,7 +27,7 @@ cd nombre-del-repositorio
 #### pip install -r requirements.txt
 
 #### Todas las categorias de Colección de Scripts y Aplicaciones en Python estan en 
-https://github.com/tu-usuario/nombre-del-repo](https://github.com/webmastervetea/Python/blob/main/CATEGORIAS.md
+https://github.com/webmastervetea/Python/blob/main/CATEGORIAS.md
 
 
 
