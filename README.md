@@ -19,15 +19,14 @@ git clone https://github.com/tu-usuario/nombre-del-repositorio.git
 cd nombre-del-repositorio
 
 ### 3. Instalar Dependencias (Por Script)
-Importante: Cada aplicación utiliza librerías diferentes. Consulta el archivo README.md dentro de la carpeta de cada script para ver las dependencias exactas (por ejemplo, pyautogui, pandas, Pillow).
-Generalmente, puedes instalar las dependencias con pip:
-Bash 
-Ejemplo: Instalación de dependencias para un script
-pip install -r requirements.txt
+#### Importante: Cada aplicación utiliza librerías diferentes. 
+#### Consulta el archivo README.md dentro de la carpeta de cada script para ver las dependencias exactas (por ejemplo, pyautogui, pandas, Pillow).
+#### Generalmente, puedes instalar las dependencias con pip:
+#### Bash 
+#### Ejemplo: Instalación de dependencias para un script
+#### pip install -r requirements.txt
 
-
-
-Todas las categorias de Colección de Scripts y Aplicaciones en Python estan en CATEGORIAS.MD
+#### Todas las categorias de Colección de Scripts y Aplicaciones en Python estan en CATEGORIAS.MD
 
 
 
