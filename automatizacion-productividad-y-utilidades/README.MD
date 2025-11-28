@@ -3,10 +3,10 @@
 
 ## 💻 Automatización, Productividad y Utilidades (20 Ideas)
 
-### apyu-1  **Detector de Archivos Duplicados:** Script para escanear un directorio e identificar archivos idénticos por *hash*.
-### apyu-2  **Lanzador de Aplicaciones Rápido:** Script que lanza aplicaciones o abre archivos según un atajo de teclado.
-### apyu-3  **Generador de Archivos Ficticios:** Crea archivos de prueba con nombres y tamaños aleatorios.
-### apyu-4  **Copia de Seguridad Simple:** Script para copiar archivos importantes a una ubicación externa programada.
+apyu-1  **Detector de Archivos Duplicados:** Script para escanear un directorio e identificar archivos idénticos por *hash*.
+apyu-2  **Lanzador de Aplicaciones Rápido:** Script que lanza aplicaciones o abre archivos según un atajo de teclado.
+apyu-3  **Generador de Archivos Ficticios:** Crea archivos de prueba con nombres y tamaños aleatorios.
+apyu-4  **Copia de Seguridad Simple:** Script para copiar archivos importantes a una ubicación externa programada.
 ### apyu-5  **Extractor de Metadatos:** Obtiene información (autor, fecha) de archivos como `.jpg` o `.mp3`.
 ### apyu-6  **Automatización de Clics/Teclado:** Usa `pyautogui` para automatizar tareas repetitivas en el escritorio.
 ### apyu-7  **Compresor/Descompresor ZIP:** Herramienta simple para manejar archivos comprimidos (`zipfile`).
