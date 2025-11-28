@@ -1,0 +1,165 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **psutil** esté instalada para obtener métricas avanzadas del sistema.
+
+# \# Puedes instalarla con: `pip install psutil`
+
+```python
+import os
+import platform
+import psutil
+import datetime
+import sys
+import getpass # Para obtener el nombre del usuario actual
+
+# --- CONFIGURACIÓN DE PANTALLA ---
+
+# # Color de fondo y texto para la consola (ANSI escape codes)
+COLOR_HEADER = "\033[96m"  # Cyan
+COLOR_OK = "\033[92m"    # Verde
+COLOR_WARNING = "\033[93m" # Amarillo
+COLOR_RESET = "\033[0m"    # Resetear color
+
+# --- FUNCIONES DE INFORMACIÓN ---
+
+def obtener_info_sistema():
+    """
+    Recopila información básica del sistema operativo.
+    """
+    info = {}
+    
+    # 1. Info del usuario y del sistema operativo
+    info['Usuario'] = getpass.getuser()
+    info['Hostname'] = platform.node()
+    info['Sistema Operativo'] = platform.system()
+    info['Release'] = platform.release()
+    info['Arquitectura'] = platform.machine()
+    
+    # 2. Hora de inicio y tiempo activo (uptime)
+    boot_time_timestamp = psutil.boot_time()
+    boot_time_dt = datetime.datetime.fromtimestamp(boot_time_timestamp)
+    info['Hora de Arranque'] = boot_time_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # 3. CPU
+    info['CPU Cores'] = psutil.cpu_count(logical=False)
+    info['CPU Hilos'] = psutil.cpu_count(logical=True)
+    info['CPU Frecuencia'] = f"{psutil.cpu_freq().current / 1000:.2f} GHz"
+    
+    # 4. Memoria (RAM)
+    memoria = psutil.virtual_memory()
+    info['RAM Total'] = convertir_bytes(memoria.total)
+    info['RAM Disponible'] = convertir_bytes(memoria.available)
+
+    # 5. Disco
+    try:
+        # # Obtener el uso del disco actual (asumiendo el directorio actual)
+        disco = psutil.disk_usage(os.getcwd())
+        info['Disco Total'] = convertir_bytes(disco.total)
+        info['Disco Usado'] = convertir_bytes(disco.used)
+        info['Disco Libre'] = convertir_bytes(disco.free)
+    except Exception:
+        info['Disco Total'] = "N/A"
+        info['Disco Usado'] = "N/A"
+        info['Disco Libre'] = "N/A"
+
+    return info
+
+def convertir_bytes(bytes_valor):
+    """
+    Convierte bytes a KB, MB, GB, TB.
+    """
+    unidades = ("Bytes", "KB", "MB", "GB", "TB")
+    i = 0
+    size = bytes_valor
+    while size >= 1024 and i < len(unidades) - 1:
+        size /= 1024
+        i += 1
+    return f"{size:.2f} {unidades[i]}"
+
+def mostrar_estado_sistema():
+    """
+    Muestra las métricas de rendimiento en tiempo real (uso de CPU y RAM).
+    """
+    cpu_percent = psutil.cpu_percent(interval=0.5)
+    mem_percent = psutil.virtual_memory().percent
+    
+    # # Definir color basado en el uso (Advertencia si > 80%)
+    color_cpu = COLOR_WARNING if cpu_percent > 80 else COLOR_OK
+    color_mem = COLOR_WARNING if mem_percent > 80 else COLOR_OK
+    
+    print("\n# --- MÉTRICAS ACTUALES ---")
+    print(f"#{color_cpu} CPU Usado: {cpu_percent:.1f}%{COLOR_RESET}")
+    print(f"#{color_mem} RAM Usada: {mem_percent:.1f}%{COLOR_RESET}")
+    print("----------------------------")
+
+def generar_banner_bienvenida(info_sistema):
+    """
+    Genera y muestra el mensaje de bienvenida personalizado.
+    """
+    nombre_usuario = info_sistema['Usuario']
+    hostname = info_sistema['Hostname']
+    
+    # # Título del banner
+    banner = f"""
+{COLOR_HEADER}
+#####################################################################
+#                                                                   #
+#       ¡BIENVENIDO AL SISTEMA!                                     #
+#       Usuario: {nombre_usuario:<40} #
+#       Host:    {hostname:<40} #
+#                                                                   #
+#####################################################################
+{COLOR_RESET}
+    """
+    print(banner)
+
+# --- FUNCIÓN PRINCIPAL ---
+
+def main():
+    # # Comprobar si psutil está instalado
+    try:
+        import psutil
+    except ImportError:
+        print("# ERROR: La librería 'psutil' es requerida para este script.")
+        print("# Por favor, instálala: pip install psutil")
+        sys.exit(1)
+        
+    print("# 🚀 Inicializando script de bienvenida...")
+    
+    # 1. Recopilar la información
+    info_sistema = obtener_info_sistema()
+    
+    # 2. Mostrar el banner de bienvenida
+    generar_banner_bienvenida(info_sistema)
+    
+    # 3. Mostrar la información estática del sistema
+    print("\n# --- DETALLES DEL SISTEMA ---")
+    for key, value in info_sistema.items():
+        print(f"#{key:<20}: {value}")
+    
+    # 4. Mostrar el estado en tiempo real
+    mostrar_estado_sistema()
+    
+    print("\n# Script finalizado. Hora de inicio de sesión: " + datetime.datetime.now().strftime("%H:%M:%S"))
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `psutil`:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install psutil
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `bienvenida_sistema.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python bienvenida_sistema.py
+    ```
+
+# El script utiliza **códigos de escape ANSI** para colorear el texto en la terminal, haciendo que el banner y las métricas sean más visibles y claros.
+
+
+
+

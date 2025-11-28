@@ -1,0 +1,205 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere dos librerías externas:
+
+# \# 1. **python-barcode:** Para generar la lógica del código.
+
+# \# 2. **Pillow (PIL):** Para guardar el código generado como un archivo de imagen (PNG).
+
+# \# Puedes instalarlas con: `pip install python-barcode Pillow`
+
+```python
+import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from barcode import EAN13, Code128
+from barcode.writer import ImageWriter
+
+# --- CONFIGURACIÓN DE BARCODE ---
+
+# # Mapeo de tipos de código disponibles para el usuario
+TIPOS_CODIGO = {
+    "EAN-13 (Productos minoristas)": "ean13",
+    "Code 128 (Uso general)": "code128"
+}
+
+def generar_codigo_barras_como_imagen(tipo_codigo, datos, ruta_guardar):
+    """
+    Genera el código de barras especificado y lo guarda como un archivo de imagen.
+
+    :param tipo_codigo: 'ean13' o 'code128'.
+    :param datos: La secuencia numérica o alfanumérica del código.
+    :param ruta_guardar: Ruta completa del archivo de imagen de salida (ej: 'codigo.png').
+    :return: True si se guarda con éxito, False en caso contrario.
+    """
+    
+    # 1. Seleccionar la clase de código de barras
+    if tipo_codigo == "ean13":
+        # # EAN-13 requiere 12 o 13 dígitos
+        ClaseBarcode = EAN13
+        longitud_esperada = 12
+    elif tipo_codigo == "code128":
+        # # Code 128 acepta cualquier longitud alfanumérica
+        ClaseBarcode = Code128
+        longitud_esperada = 0 # No hay longitud fija
+
+    # 2. Validación de datos
+    if ClaseBarcode == EAN13:
+        # # Para EAN-13, comprobamos que sean solo dígitos y la longitud correcta
+        if not datos.isdigit() or len(datos) != longitud_esperada:
+            messagebox.showerror("Error de Datos", 
+                                 f"EAN-13 requiere exactamente {longitud_esperada} dígitos numéricos.")
+            return False
+    # # Para Code 128, la librería hará la validación interna si hay caracteres no soportados.
+
+    try:
+        # 3. Crear el objeto Barcode
+        # # La librería calcula automáticamente el dígito de control si se le dan 12 dígitos para EAN13.
+        barcode_instance = ClaseBarcode(datos, writer=ImageWriter())
+        
+        # 4. Guardar el código como imagen PNG
+        # # El método `write` guarda el archivo. El nombre es la ruta_guardar sin extensión.
+        # # # `module_height`: altura de las barras. `text_distance`: espacio entre barras y texto.
+        barcode_instance.write(
+            ruta_guardar, 
+            options={'module_height': 15, 'text_distance': 5, 'font_size': 12, 'write_text': True}
+        )
+        
+        return True
+        
+    except Exception as e:
+        messagebox.showerror("Error de Generación", 
+                             f"Fallo al generar el código. Asegúrate de que los datos sean válidos. Detalles: {e}")
+        return False
+
+
+class GeneradorBarcodeApp:
+    """
+    Clase que gestiona la Interfaz Gráfica (GUI).
+    """
+    def __init__(self, master):
+        self.master = master
+        master.title("Generador de Códigos de Barras")
+        master.geometry("400x350")
+        master.config(padx=10, pady=10)
+
+        # Variables de Control
+        self.tipo_codigo = tk.StringVar(value=list(TIPOS_CODIGO.keys())[0]) # EAN-13 por defecto
+        self.datos_entrada = tk.StringVar()
+
+        self.crear_widgets()
+
+    def crear_widgets(self):
+        """Crea y coloca todos los widgets de la interfaz."""
+        
+        # --- TÍTULO ---
+        tk.Label(self.master, 
+                 text="Generador de Código de Barras", 
+                 font=('Arial', 14, 'bold')).pack(pady=10)
+        
+        # --- Frame de Configuración ---
+        frame_config = tk.LabelFrame(self.master, text="Configuración", padx=10, pady=10)
+        frame_config.pack(fill="x", pady=10)
+
+        # Tipo de Código (Combobox)
+        tk.Label(frame_config, text="Tipo de Código:").grid(row=0, column=0, sticky="w", pady=5)
+        ttk.Combobox(frame_config, 
+                     textvariable=self.tipo_codigo, 
+                     values=list(TIPOS_CODIGO.keys()),
+                     state="readonly").grid(row=0, column=1, sticky="ew", padx=5)
+
+        # Datos de Entrada
+        tk.Label(frame_config, text="Datos a Codificar:").grid(row=1, column=0, sticky="w", pady=5)
+        tk.Entry(frame_config, textvariable=self.datos_entrada, width=30).grid(row=1, column=1, sticky="ew", padx=5)
+
+        # --- Botón de Generación ---
+        tk.Button(self.master, 
+                  text="GENERAR Y GUARDAR IMAGEN", 
+                  command=self.solicitar_guardado,
+                  bg='#00B0FF', fg='white', 
+                  font=('Arial', 12, 'bold')).pack(pady=20, fill='x')
+
+        # --- Notas de Uso ---
+        tk.Label(self.master, 
+                 text="* EAN-13: Requiere 12 dígitos (ej: 012345678901)\n* Code 128: Cualquier texto/número",
+                 justify=tk.LEFT,
+                 fg='gray').pack(pady=5)
+
+    def solicitar_guardado(self):
+        """
+        Pide al usuario la ubicación para guardar la imagen y llama a la función de generación.
+        """
+        datos = self.datos_entrada.get().strip()
+        nombre_tipo = self.tipo_codigo.get()
+        tipo_codigo_id = TIPOS_CODIGO[nombre_tipo]
+
+        if not datos:
+            messagebox.showerror("Error", "Por favor, introduce los datos a codificar.")
+            return
+
+        # 1. Solicitar ruta para guardar el archivo
+        nombre_por_defecto = f"{tipo_codigo_id}_{datos}.png"
+        ruta_guardar = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            initialfile=nombre_por_defecto,
+            title="Guardar imagen del Código de Barras",
+            filetypes=[("Archivos PNG", "*.png")]
+        )
+        
+        if not ruta_guardar:
+            return # Cancelado por el usuario
+
+        # 2. Generar y guardar
+        if generar_codigo_barras_como_imagen(tipo_codigo_id, datos, ruta_guardar.replace('.png', '')):
+            messagebox.showinfo("Éxito", f"Código de barras generado y guardado en:\n{ruta_guardar}")
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    # # Verificar dependencias antes de intentar ejecutar
+    try:
+        import barcode
+        from PIL import Image # Pillow se importa internamente por ImageWriter
+    except ImportError:
+        messagebox.showerror("Error de Librería", 
+                             "Faltan librerías: Ejecuta 'pip install python-barcode Pillow'")
+        sys.exit(1)
+        
+    root = tk.Tk()
+    app = GeneradorBarcodeApp(root)
+    print("# Generador de Código de Barras iniciado. Introduce los datos y guarda la imagen.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    # # Necesitamos una instancia de Tkinter para los cuadros de diálogo de error, 
+    # # # incluso si la app falla al inicio.
+    root_temp = tk.Tk()
+    root_temp.withdraw() 
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala las librerías necesarias:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install python-barcode Pillow
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `generador_barcode.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python generador_barcode.py
+    ```
+4.  **Genera el Código:**
+      * **Selecciona el Tipo:** Elige **EAN-13** o **Code 128** en el menú desplegable.
+      * **Introduce los Datos:**
+          * Para **EAN-13**, introduce 12 dígitos (el 13º dígito de control se calcula automáticamente).
+          * Para **Code 128**, introduce cualquier texto o número.
+      * Haz clic en **"GENERAR Y GUARDAR IMAGEN"** y selecciona la ubicación para guardar el archivo PNG resultante.
+
+# El script utiliza **ImageWriter** de `python-barcode` (que requiere Pillow) para generar un archivo PNG de alta calidad.
+
+
+
+

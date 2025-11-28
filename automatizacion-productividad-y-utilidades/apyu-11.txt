@@ -1,0 +1,199 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+
+# Este script requiere que la librería **requests** esté instalada.
+
+# \# Puedes instalarla con `pip install requests`.
+
+```python
+import requests
+import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from urllib.parse import urlparse # Útil para la validación básica de URL
+
+# --- CONFIGURACIÓN ---
+
+# # Tiempo máximo de espera (timeout) para la conexión HTTP en segundos
+TIMEOUT_SECONDS = 10 
+# # User-Agent para simular un navegador real y evitar el bloqueo por algunos sitios
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+# # Códigos de estado HTTP que se consideran un enlace roto (además de los errores de conexión)
+CODIGOS_ROTO = [400, 403, 404, 405, 410, 500, 503]
+
+def verificar_url(url):
+    """
+    Realiza una solicitud HEAD a una URL y determina su estado.
+
+    :param url: La URL a verificar.
+    :return: Una tupla (estado_simbólico, código_http)
+    """
+    # 1. Asegurar el esquema HTTP/HTTPS (requests lo requiere)
+    if not url.startswith('http'):
+        url = 'http://' + url
+        
+    # 2. Validar sintaxis básica (opcional, pero útil)
+    parsed_url = urlparse(url)
+    if not parsed_url.netloc:
+        return "URL Inválida", 0
+
+    # 3. Realizar la solicitud HTTP (HEAD es más rápido que GET)
+    try:
+        # # `allow_redirects=True` sigue redirecciones (3xx)
+        # # # `stream=True` asegura que no descargamos el contenido
+        response = requests.head(url, 
+                                 timeout=TIMEOUT_SECONDS, 
+                                 allow_redirects=True,
+                                 headers={'User-Agent': USER_AGENT})
+        
+        # # Si la solicitud HEAD falla, intentar con GET (algunos servidores lo bloquean)
+        if response.status_code >= 400:
+             response = requests.get(url, 
+                                     timeout=TIMEOUT_SECONDS, 
+                                     allow_redirects=True,
+                                     headers={'User-Agent': USER_AGENT},
+                                     stream=True)
+                                     
+        codigo = response.status_code
+        
+        # 4. Clasificar el estado
+        if codigo < 400:
+            return "✅ OK", codigo
+        elif codigo in CODIGOS_ROTO:
+            return "❌ ROTO", codigo
+        else:
+            return "⚠️ OTRO ERROR HTTP", codigo
+
+    except requests.exceptions.Timeout:
+        return "❌ TIMEOUT", 0
+    except requests.exceptions.ConnectionError:
+        return "❌ CONEXIÓN FALLIDA", 0
+    except requests.exceptions.RequestException as e:
+        return f"❌ ERROR DE PETICIÓN ({type(e).__name__})", 0
+    except Exception:
+        return "❌ ERROR DESCONOCIDO", 0
+
+
+def escanear_enlaces_archivo(ruta_archivo):
+    """
+    Lee un archivo de texto con URLs y verifica cada una.
+
+    :param ruta_archivo: Ruta del archivo que contiene una URL por línea.
+    """
+    
+    # 1. Inicializar listas de resultados
+    urls_a_verificar = []
+    
+    # 2. Leer las URLs del archivo
+    try:
+        with open(ruta_archivo, 'r', encoding='utf-8') as f:
+            for linea in f:
+                url = linea.strip()
+                if url: # Asegurarse de que la línea no esté vacía
+                    urls_a_verificar.append(url)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "El archivo de origen no fue encontrado.")
+        return
+    except Exception as e:
+        messagebox.showerror("Error", f"Error al leer el archivo: {e}")
+        return
+
+    print(f"# ⏳ Iniciando verificación de {len(urls_a_verificar)} URL(s)...")
+    
+    resultados = {
+        'ok': [],
+        'roto': [],
+        'otros': []
+    }
+    
+    # 3. Bucle de verificación
+    for i, url in enumerate(urls_a_verificar):
+        estado, codigo = verificar_url(url)
+        
+        # # Mostrar progreso en la consola
+        print(f"#{i+1:02d}. {estado:<15} ({codigo}) | {url}")
+        
+        # # Clasificar el resultado
+        if estado == "✅ OK":
+            resultados['ok'].append((url, codigo))
+        elif estado.startswith("❌"):
+            resultados['roto'].append((url, codigo))
+        else:
+            resultados['otros'].append((url, codigo))
+
+    # 4. Mostrar resumen final
+    print("\n# === RESUMEN DE LA VERIFICACIÓN ===")
+    print(f"## ✅ OK: {len(resultados['ok'])} enlaces")
+    print(f"## ❌ ROTOS/FALLIDOS: {len(resultados['roto'])} enlaces")
+    print(f"## ⚠️ OTROS ERRORES: {len(resultados['otros'])} enlaces")
+    print("-----------------------------------")
+    
+    if resultados['roto']:
+        print("## LISTA DE ENLACES ROTOS (FALLIDOS):")
+        for url, codigo in resultados['roto']:
+            print(f"# [CÓDIGO: {codigo}] -> {url}")
+            
+    messagebox.showinfo("Verificación Completa", 
+                        f"Verificación finalizada:\nOK: {len(resultados['ok'])}\nROTO: {len(resultados['roto'])}\nOTROS: {len(resultados['otros'])}")
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar archivo) ---
+
+def main():
+    # # Inicializar Tkinter para los diálogos gráficos
+    root = tk.Tk()
+    root.withdraw() 
+    
+    print("# --- VERIFICADOR DE ENLACES ROTOS ---")
+    
+    # # Abrir diálogo para seleccionar el archivo de texto
+    ruta_archivo = filedialog.askopenfilename(
+        title="Seleccione un archivo de texto (.txt) con URLs (una por línea)",
+        filetypes=[("Archivos de Texto", "*.txt")]
+    )
+    
+    if not ruta_archivo:
+        print("# Operación cancelada por el usuario. Saliendo.")
+        sys.exit(0)
+        
+    escanear_enlaces_archivo(ruta_archivo)
+
+if __name__ == "__main__":
+    # # Verificar dependencias
+    try:
+        import requests
+    except ImportError:
+        print("# ERROR: La librería requests es requerida.")
+        print("# Por favor, instálala: pip install requests")
+        sys.exit(1)
+        
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `requests`:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install requests
+    ```
+2.  **Crea el archivo de URLs:** Crea un archivo de texto simple (ejemplo: `enlaces.txt`) y coloca una URL por línea:
+    ```
+    https://www.google.com
+    https://estaesunarotax.com/404
+    http://wikipedia.org
+    https://unservidorqueexisteperoestacaido.net
+    ```
+3.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `verificador_enlaces.py`.
+4.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python verificador_enlaces.py
+    ```
+5.  **Selecciona el Archivo:** Se abrirá una ventana de diálogo. Selecciona tu archivo `enlaces.txt`.
+6.  **Revisa los Resultados:** El script imprimirá el estado de cada URL en tiempo real en la consola y mostrará un resumen final, listando los enlaces fallidos.
+
+# El script utiliza el método **`HEAD`** para verificar los enlaces rápidamente sin descargar el contenido de la página, lo que lo hace muy eficiente.
+
+
+
+

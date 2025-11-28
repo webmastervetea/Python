@@ -1,0 +1,204 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **os** para la navegación de archivos
+
+# \# y **tkinter** para la interfaz gráfica.
+
+```python
+import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from collections import defaultdict
+
+# --- CONFIGURACIÓN ---
+
+# # Extensiones de archivo a incluir en el conteo. 
+# # # Añade otras si trabajas con JavaScript (.js), Java (.java), etc.
+EXTENSIONES_VALIDAS = ('.py', '.txt') 
+# # Caracteres o patrones que indican una línea de comentario
+COMENTARIOS_PYTHON = ('#', '"""', "'''")
+
+def es_linea_de_codigo(linea):
+    """
+    Verifica si una línea contiene código ejecutable/significativo,
+    excluyendo líneas vacías o de comentario.
+
+    :param linea: La línea de texto a evaluar.
+    :return: True si es código, False si es comentario o vacío.
+    """
+    linea_limpia = linea.strip()
+    
+    # 1. Excluir líneas completamente vacías
+    if not linea_limpia:
+        return False
+        
+    # 2. Excluir líneas de comentario de Python ('#')
+    if linea_limpia.startswith(COMENTARIOS_PYTHON[0]):
+        return False
+        
+    # 3. Excluir líneas que son solo el inicio/fin de docstrings o comentarios multilínea
+    # # No es una verificación perfecta para docstrings complejos, pero cubre el caso común.
+    if linea_limpia == COMENTARIOS_PYTHON[1] or linea_limpia == COMENTARIOS_PYTHON[2]:
+        return False
+        
+    return True
+
+def contar_lineas_en_archivo(ruta_archivo):
+    """
+    Cuenta las líneas significativas de código en un archivo.
+
+    :param ruta_archivo: Ruta del archivo.
+    :return: Tupla (total_lineas, lineas_codigo, lineas_comentario)
+    """
+    total = 0
+    codigo = 0
+    comentario = 0
+    dentro_de_docstring = False
+    
+    # # Patrones para detectar el inicio/fin de docstrings
+    docstring_inicio = COMENTARIOS_PYTHON[1] 
+    docstring_fin = COMENTARIOS_PYTHON[2] 
+
+    try:
+        with open(ruta_archivo, 'r', encoding='utf-8', errors='ignore') as f:
+            for linea in f:
+                total += 1
+                linea_limpia = linea.strip()
+                
+                # Manejo de docstrings multilínea (muy simplificado)
+                if linea_limpia.startswith(docstring_inicio) or linea_limpia.startswith(docstring_fin):
+                    # # Si encontramos un inicio, cambiamos el estado
+                    if not dentro_de_docstring:
+                        dentro_de_docstring = True
+                        comentario += 1
+                    # # Si encontramos un fin, cambiamos el estado
+                    elif dentro_de_docstring:
+                        dentro_de_docstring = False
+                        comentario += 1
+                    continue
+                
+                if dentro_de_docstring:
+                    comentario += 1
+                    continue
+                
+                if es_linea_de_codigo(linea):
+                    codigo += 1
+                else:
+                    # # Si no es código y no es vacío, asumimos que es comentario de una sola línea
+                    if linea_limpia:
+                        comentario += 1
+
+    except Exception:
+        # # Error de lectura (permiso o codificación)
+        return total, -1, -1 
+
+    return total, codigo, comentario
+
+
+def escanear_directorio(directorio_raiz):
+    """
+    Recorre el directorio y sus subdirectorios contando las líneas de código.
+    """
+    # # Almacenar los resultados por extensión: {ext: [total_l, total_c, total_com]}
+    resultados_globales = defaultdict(lambda: [0, 0, 0]) 
+    archivos_analizados = 0
+    
+    print(f"\n# 🔍 Iniciando conteo de líneas de código en: {directorio_raiz}")
+
+    for dirpath, dirnames, filenames in os.walk(directorio_raiz):
+        for nombre_archivo in filenames:
+            
+            # 1. Verificar la extensión
+            nombre_base, extension = os.path.splitext(nombre_archivo)
+            if extension.lower() in EXTENSIONES_VALIDAS:
+                ruta_completa = os.path.join(dirpath, nombre_archivo)
+                archivos_analizados += 1
+                
+                # 2. Contar las líneas
+                total, codigo, comentario = contar_lineas_en_archivo(ruta_completa)
+                
+                if codigo != -1:
+                    resultados_globales[extension][0] += total
+                    resultados_globales[extension][1] += codigo
+                    resultados_globales[extension][2] += comentario
+                
+                    print(f"# Analizado: {nombre_archivo:<30} | Código: {codigo:<5} | Comentarios: {comentario}")
+                else:
+                    print(f"# ❌ Error de lectura/permisos en: {nombre_archivo}")
+    
+    return resultados_globales, archivos_analizados
+
+
+def mostrar_resumen_global(resultados, archivos_analizados):
+    """
+    Muestra el resumen final del conteo de líneas.
+    """
+    total_loc = sum(res[1] for res in resultados.values())
+    total_general = sum(res[0] for res in resultados.values())
+    total_comentarios = sum(res[2] for res in resultados.values())
+    
+    print("\n# === RESUMEN GLOBAL DEL CONTEO LOC ===")
+    print(f"## 📁 Archivos analizados: {archivos_analizados}")
+    print(f"## 📝 Total de Líneas Contadas: {total_general}")
+    print(f"{COLOR_OK}## 💻 Líneas de Código (LOC): {total_loc}{COLOR_RESET}")
+    print(f"{COLOR_WARNING}## 💬 Líneas de Comentario: {total_comentarios}{COLOR_RESET}")
+    print("---------------------------------------")
+    
+    if total_loc > 0:
+        print("\n# DETALLE POR EXTENSIÓN:")
+        for ext, (t, c, co) in resultados.items():
+            if c > 0:
+                print(f"# {ext.upper():<5} | Código: {c:<7} | Comentario: {co}")
+    
+    messagebox.showinfo("Conteo Finalizado", f"Análisis LOC completado:\nLíneas de Código (LOC): {total_loc}\nTotal de Comentarios: {total_comentarios}")
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar carpeta) ---
+
+def main():
+    # # Inicializar Tkinter para los diálogos gráficos
+    root = tk.Tk()
+    root.withdraw() 
+    
+    # # Definir colores para el resumen
+    global COLOR_OK, COLOR_WARNING
+    COLOR_OK = "\033[92m" 
+    COLOR_WARNING = "\033[93m" 
+    COLOR_RESET = "\033[0m"
+
+    print("# --- CONTADOR DE LÍNEAS DE CÓDIGO (LOC) ---")
+    
+    # # Abrir diálogo para seleccionar la carpeta a escanear
+    directorio_a_escanear = filedialog.askdirectory(title="Seleccione la carpeta raíz del proyecto a analizar")
+    
+    if not directorio_a_escanear:
+        print("# Operación cancelada por el usuario. Saliendo.")
+        sys.exit(0)
+        
+    # # Ejecutar el escaneo
+    resultados_globales, archivos_analizados = escanear_directorio(directorio_a_escanear)
+    
+    # # Mostrar los resultados
+    mostrar_resumen_global(resultados_globales, archivos_analizados)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `contador_loc.py`.
+2.  **Ajusta las Extensiones:** Edita la lista `EXTENSIONES_VALIDAS` en la sección de CONFIGURACIÓN si deseas incluir otros tipos de archivos de código (por ejemplo, `.js`, `.c`, `.html`).
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python contador_loc.py
+    ```
+4.  **Selecciona la Carpeta:** Se abrirá una ventana de diálogo. Selecciona la carpeta que contiene tu proyecto de código.
+5.  **Revisa los Resultados:** El script escaneará todos los archivos válidos e imprimirá en la consola el conteo detallado por archivo y un resumen final con el **Total de Líneas de Código (LOC)** y comentarios.
+
+# La lógica de conteo intenta activamente excluir líneas que solo contienen comentarios de una sola línea (`#`) o que están completamente en blanco, proporcionando una métrica más precisa de la cantidad de código significativo.
+
+
+
+

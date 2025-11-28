@@ -1,0 +1,154 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **pydub** y **ffmpeg** estén instaladas.
+
+# \# 1. Instalar la librería Python: `pip install pydub`
+
+# \# 2. Instalar el programa FFmpeg: Pydub requiere que FFmpeg o Libav estén instalados
+
+# \# \# en tu sistema operativo y accesibles desde la línea de comandos (en la variable PATH).
+
+```python
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import os
+import sys
+
+# # Importar la librería de audio
+try:
+    from pydub import AudioSegment
+except ImportError:
+    messagebox.showerror("Error de Librería", "pydub no está instalado. Ejecuta: pip install pydub")
+    sys.exit(1)
+
+class ConversorAudioApp:
+    """
+    Clase principal que gestiona la GUI y la lógica de conversión de audio.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la Ventana Principal
+        self.master = master
+        master.title("Conversor de Audio MP3 a WAV")
+        master.geometry("450x250")
+        master.config(padx=10, pady=10)
+
+        # 2. Variables de Control
+        self.ruta_mp3 = tk.StringVar(value="Seleccionar archivo .mp3...")
+
+        # 3. Construcción de la Interfaz
+        self.crear_widgets()
+
+    def crear_widgets(self):
+        """
+        Crea y coloca todos los widgets de la interfaz.
+        """
+        # --- TÍTULO ---
+        tk.Label(self.master, 
+                 text="MP3 a WAV (Requiere FFmpeg)", 
+                 font=('Arial', 14, 'bold')).pack(pady=10)
+        
+        # --- Frame de Selección de Archivo ---
+        frame_archivo = tk.LabelFrame(self.master, text="Archivo MP3 de Origen", padx=10, pady=10)
+        frame_archivo.pack(fill="x", pady=10)
+
+        tk.Entry(frame_archivo, 
+                 textvariable=self.ruta_mp3, 
+                 state='readonly').pack(fill='x', pady=2)
+        
+        tk.Button(frame_archivo, 
+                  text="Seleccionar MP3", 
+                  command=self.seleccionar_mp3).pack(pady=5)
+
+        # --- Botón de Conversión ---
+        tk.Button(self.master, 
+                  text="CONVERTIR A WAV", 
+                  command=self.convertir_audio,
+                  bg='#9C27B0', fg='white', 
+                  font=('Arial', 12, 'bold')).pack(pady=15, fill='x')
+
+    def seleccionar_mp3(self):
+        """Abre el diálogo para seleccionar el archivo MP3."""
+        ruta = filedialog.askopenfilename(
+            title="Selecciona el archivo MP3",
+            filetypes=[("Archivos MP3", "*.mp3")]
+        )
+        if ruta:
+            self.ruta_mp3.set(ruta)
+
+    def convertir_audio(self):
+        """
+        Carga el archivo MP3 y lo exporta como WAV.
+        """
+        ruta_origen = self.ruta_mp3.get()
+        
+        if not os.path.isfile(ruta_origen) or ruta_origen == "Seleccionar archivo .mp3...":
+            messagebox.showerror("Error", "Por favor, selecciona un archivo MP3 válido.")
+            return
+            
+        # 1. Definir la ruta de destino (mismo directorio, extensión .wav)
+        directorio = os.path.dirname(ruta_origen)
+        nombre_base = os.path.splitext(os.path.basename(ruta_origen))[0]
+        ruta_destino = os.path.join(directorio, f"{nombre_base}.wav")
+        
+        print(f"# 🔄 Convirtiendo: {os.path.basename(ruta_origen)}...")
+        
+        try:
+            # 2. Cargar el archivo MP3 usando pydub
+            # # pydub utiliza automáticamente FFmpeg para manejar el formato MP3
+            audio = AudioSegment.from_mp3(ruta_origen)
+            
+            # 3. Exportar el archivo al formato WAV
+            # # El formato de destino se infiere de la opción 'format="wav"'
+            audio.export(ruta_destino, format="wav")
+            
+            messagebox.showinfo("Éxito", f"Conversión completada con éxito. Archivo guardado en:\n{ruta_destino}")
+            
+        except FileNotFoundError:
+            # # Este error suele ocurrir si FFmpeg no está instalado o no está en el PATH
+            messagebox.showerror("Error de FFmpeg", 
+                                 "FFmpeg no se encuentra. Asegúrate de instalar FFmpeg y añadirlo a tu PATH.")
+        except Exception as e:
+            messagebox.showerror("Error de Conversión", f"Fallo en la conversión: {e}")
+            print(f"# ❌ Error detallado: {e}")
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    root = tk.Tk()
+    app = ConversorAudioApp(root)
+    print("# Conversor de Audio iniciado. Requiere FFmpeg instalado.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones Cruciales para Usar el Programa
+
+El paso más importante es la instalación de **FFmpeg**, ya que la mayoría de las librerías de Python para MP3 (como `pydub`) lo utilizan como *backend* para decodificar MP3.
+
+### 1\. Instalación de Dependencias
+
+  * **Librería Python:**
+    ```bash
+    pip install pydub
+    ```
+  * **FFmpeg (Programa Externo):**
+      * **Windows:** Descarga los binarios de FFmpeg, descomprime el archivo y añade la carpeta `bin` a la variable de entorno **PATH** de tu sistema.
+      * **macOS (usando Homebrew):** `brew install ffmpeg`
+      * **Linux (usando apt):** `sudo apt install ffmpeg`
+
+### 2\. Uso del Script
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `conversor_audio.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python conversor_audio.py
+    ```
+3.  **Convierte:** Haz clic en **"Seleccionar MP3"**, elige tu archivo y luego haz clic en **"CONVERTIR A WAV"**. El archivo `.wav` resultante se guardará en el mismo directorio que el MP3 original.
+
+
+
+
+

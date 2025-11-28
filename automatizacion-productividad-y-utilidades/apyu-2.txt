@@ -1,0 +1,118 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **keyboard** esté instalada y que se ejecute con **privilegios suficientes** (puede requerir `sudo` en Linux o privilegios de administrador en Windows, dependiendo de la configuración).
+
+# \# Puedes instalarla con `pip install keyboard`.
+
+```python
+import keyboard
+import os
+import subprocess
+import time
+
+# --- CONFIGURACIÓN ---
+
+# # Diccionario de aplicaciones y comandos a ejecutar.
+# # # CLAVE: Atajo de teclado a presionar (Ej: 'ctrl+alt+n', 'win+p').
+# # # VALOR: El comando del sistema operativo para abrir la aplicación o archivo.
+# # # NOTA IMPORTANTE: Los comandos deben ser válidos para tu sistema operativo (Windows/Linux/macOS).
+ATAJOS_DE_LANZAMIENTO = {
+    # Ejemplo 1: Abrir el Bloc de Notas (Windows) o Gedit (Linux)
+    'ctrl+alt+n': 'notepad.exe', # Para Windows
+    # 'ctrl+alt+n': 'gedit', # Para Linux
+    
+    # Ejemplo 2: Abrir el Navegador Web
+    'ctrl+alt+w': 'start chrome "https://www.google.com"', # Para Windows (abre Chrome)
+    # 'ctrl+alt+w': 'xdg-open "https://www.google.com"', # Para Linux (abre el navegador por defecto)
+    
+    # Ejemplo 3: Abrir la Calculadora
+    'ctrl+alt+c': 'calc.exe', # Para Windows
+    # 'ctrl+alt+c': 'gnome-calculator', # Para Linux (cambiar según tu DE)
+    
+    # Ejemplo 4: Abrir una carpeta específica (reemplaza la ruta)
+    'ctrl+alt+f': 'explorer C:\\Users\\Public\\Documents', # Para Windows
+    # 'ctrl+alt+f': 'xdg-open /home/usuario/Documentos', # Para Linux (reemplaza la ruta)
+}
+
+def ejecutar_comando(comando):
+    """
+    Ejecuta un comando del sistema operativo de forma asíncrona.
+
+    :param comando: La cadena de comando a ejecutar.
+    """
+    try:
+        # # `subprocess.Popen` inicia la aplicación sin esperar a que termine,
+        # # # lo cual es ideal para un lanzador de aplicaciones.
+        subprocess.Popen(comando, shell=True)
+        print(f"# ✅ Comando ejecutado: {comando}")
+    except Exception as e:
+        print(f"# ❌ ERROR al ejecutar '{comando}': {e}")
+        # # Si falla, podría ser por un comando incorrecto o falta de privilegios.
+        messagebox.showerror("Error de Ejecución", f"No se pudo ejecutar: {comando}\nError: {e}")
+
+def configurar_lanzador():
+    """
+    Configura y registra todos los atajos de teclado definidos.
+    """
+    print("# --- LANZADOR DE APLICACIONES RÁPIDO ---")
+    print("# El lanzador está escuchando los siguientes atajos:")
+    
+    # # Iterar sobre el diccionario de atajos y comandos
+    for atajo, comando in ATAJOS_DE_LANZAMIENTO.items():
+        # # `keyboard.add_hotkey(atajo, función)` registra el atajo.
+        # # # Cuando el atajo es presionado, se llama a la función lambda que ejecuta el comando.
+        keyboard.add_hotkey(atajo, lambda cmd=comando: ejecutar_comando(cmd))
+        print(f"# [{atajo}] -> Comando: {comando}")
+    
+    print("\n# 🟢 Lanzador activo. Presione Ctrl+C en la terminal para detener.")
+    
+    # 3. Mantener el programa corriendo
+    try:
+        # # `keyboard.wait()` bloquea el script hasta que se presione una tecla especial 
+        # # # o hasta que el programa sea interrumpido manualmente (Ctrl+C).
+        keyboard.wait('esc') # Podrías esperar 'esc' o simplemente dejar un bucle.
+        # # Una alternativa simple es un bucle infinito que se detiene con Ctrl+C
+        # while True:
+        #     time.sleep(1) 
+            
+    except KeyboardInterrupt:
+        print("\n# 🛑 Lanzador detenido por el usuario.")
+    except Exception as e:
+        print(f"\n# 🛑 Error inesperado: {e}")
+        
+    print("# --- FIN DEL PROGRAMA ---")
+
+
+# --- Bloque Principal de Ejecución ---
+if __name__ == "__main__":
+    # # Importar messagebox solo si es necesario (para evitar dependencia de Tkinter si no se usa)
+    try:
+        from tkinter import messagebox
+    except ImportError:
+        # # Si Tkinter no está disponible, creamos una función dummy para evitar errores
+        print("# Advertencia: Tkinter no encontrado. Las alertas de error no se mostrarán.")
+        def messagebox(*args, **kwargs): pass
+        
+    configurar_lanzador()
+```
+
+## 📝 Instrucciones y Advertencias
+
+1.  **Instala la librería `keyboard`:**
+    ```bash
+    pip install keyboard
+    ```
+2.  **Ajusta los comandos:** **Debes modificar** el diccionario `ATAJOS_DE_LANZAMIENTO` para que los comandos (`notepad.exe`, `start chrome`, `gedit`, `xdg-open`, etc.) coincidan con las aplicaciones instaladas y las sintaxis de comandos de tu **Sistema Operativo** (Windows, Linux o macOS).
+3.  **Guarda y Ejecuta:** Guarda el código en un archivo (`lanzador.py`) y ejecútalo desde tu terminal:
+    ```bash
+    python lanzador.py
+    ```
+      * **Advertencia de Permisos:** En algunos sistemas (especialmente al usar combinaciones como `Win` o `Ctrl+Alt`), puede que necesites ejecutar el script con permisos de administrador o `sudo` para que pueda capturar los atajos de teclado globales.
+4.  **Usa los Atajos:** Mientras el script esté corriendo en la terminal, presiona las combinaciones de teclas que definiste (ej. `Ctrl + Alt + N`).
+5.  **Detén el Lanzador:** Vuelve a la terminal y presiona **`Ctrl + C`** para detener el programa.
+
+# ¡Este script proporciona una forma poderosa de automatizar tareas comunes\!
+
+
+
+

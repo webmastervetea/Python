@@ -1,0 +1,167 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+
+# Este script requiere que la librería **googletrans** esté instalada.
+
+# \# **Nota Importante:** La librería original `googletrans` ha tenido problemas de mantenimiento.
+
+# \# \# Se recomienda usar una versión compatible o fork como `googletrans==4.0.0-rc1` o `googletrans-py`.
+
+# \# Instalación recomendada: `pip install googletrans==4.0.0-rc1`
+
+```python
+import sys
+import tkinter as tk
+from tkinter import messagebox
+from googletrans import Translator
+
+# --- CONFIGURACIÓN Y MAPEO DE IDIOMAS ---
+
+# # Mapeo de códigos de idioma para facilitar la entrada del usuario
+# # # El usuario puede escribir 'es', 'en', 'fr', etc.
+CODIGOS_IDIOMA = {
+    'es': 'español',
+    'en': 'inglés',
+    'fr': 'francés',
+    'de': 'alemán',
+    'it': 'italiano',
+    'pt': 'portugués',
+    'zh': 'chino',
+    'ja': 'japonés',
+    'ru': 'ruso',
+}
+
+def traducir_texto(texto, idioma_destino='en', idioma_origen='auto'):
+    """
+    Traduce un texto usando la API de Google Translate.
+
+    :param texto: El texto a traducir.
+    :param idioma_destino: Código de dos letras del idioma de destino (ej: 'en').
+    :param idioma_origen: Código de dos letras del idioma de origen (ej: 'es' o 'auto').
+    :return: El texto traducido.
+    """
+    try:
+        # # Crear la instancia del traductor
+        translator = Translator()
+        
+        # # Realizar la traducción
+        resultado = translator.translate(
+            text=texto, 
+            dest=idioma_destino, 
+            src=idioma_origen
+        )
+        
+        # # El resultado es un objeto, necesitamos el atributo '.text'
+        return resultado.text
+        
+    except Exception as e:
+        # # Capturar errores de conexión, límite de peticiones o API
+        print(f"\n# ❌ ERROR de traducción: No se pudo conectar o procesar la solicitud. Detalles: {e}")
+        return None
+
+def mostrar_idiomas_disponibles():
+    """
+    Muestra los códigos de idioma soportados en la consola.
+    """
+    print("\n# --- CÓDIGOS DE IDIOMA SOPORTADOS ---")
+    for code, name in CODIGOS_IDIOMA.items():
+        print(f"# {code:<5} -> {name.capitalize()}")
+    print("# 'auto' -> Detección automática de idioma de origen.")
+    print("---------------------------------------")
+
+def iniciar_traductor_consola():
+    """
+    Función principal que gestiona la interacción con el usuario en la terminal.
+    """
+    print("## 🌐 TRADUCTOR DE IDIOMAS POR CONSOLA")
+    mostrar_idiomas_disponibles()
+    
+    # # Bucle principal de la aplicación
+    while True:
+        print("\n# --- NUEVA TRADUCCIÓN ---")
+        
+        # 1. Entrada de Idioma Destino
+        idioma_destino_entrada = input(">> Idioma de Destino (Ej: en, es, fr, ?): ").lower().strip()
+        if idioma_destino_entrada == 'salir':
+            break
+        if idioma_destino_entrada == '?' or idioma_destino_entrada == 'ayuda':
+            mostrar_idiomas_disponibles()
+            continue
+
+        # 2. Validación de Idioma Destino
+        if idioma_destino_entrada not in CODIGOS_IDIOMA:
+            print("# ⚠️ Código de idioma de destino no reconocido. Usando 'en' (Inglés) por defecto.")
+            idioma_destino = 'en'
+        else:
+            idioma_destino = idioma_destino_entrada
+
+        # 3. Entrada de Texto
+        texto_a_traducir = input(f">> Texto a traducir a {CODIGOS_IDIOMA.get(idioma_destino, idioma_destino)}:\n> ").strip()
+        
+        if not texto_a_traducir:
+            print("# ⚠️ Texto vacío. Vuelva a intentarlo.")
+            continue
+            
+        # 4. Realizar Traducción
+        resultado_traduccion = traducir_texto(texto_a_traducir, idioma_destino)
+        
+        # 5. Mostrar Resultado
+        if resultado_traduccion:
+            print("\n## ✨ RESULTADO DE LA TRADUCCIÓN:")
+            print(f"   {resultado_traduccion}")
+            print("---------------------------------")
+
+
+    print("# 👋 Traductor de idiomas finalizado.")
+
+
+# --- Bloque Principal de Ejecución ---
+
+if __name__ == "__main__":
+    # # Verificar dependencias antes de intentar ejecutar
+    try:
+        # # Intentar importar y crear una instancia para asegurar que la versión es compatible
+        from googletrans import Translator
+        _ = Translator() 
+    except ImportError:
+        print("# ERROR: La librería googletrans es requerida.")
+        print("# Por favor, instálala (puede requerir la versión rc1):")
+        print("# pip install googletrans==4.0.0-rc1")
+        sys.exit(1)
+    except Exception as e:
+        print("# ADVERTENCIA: La conexión inicial a la API falló. El traductor podría no funcionar.")
+        print(f"# Detalles del error: {e}")
+        # # Continuar, ya que a veces el error es transitorio
+
+    # # Usar Tkinter para el error de dependencia, pero retirarlo para la consola
+    root = tk.Tk()
+    root.withdraw() 
+    
+    iniciar_traductor_consola()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `googletrans`:** Abre tu terminal y ejecuta la instalación recomendada:
+    ```bash
+    pip install googletrans==4.0.0-rc1
+    ```
+      * *(Si tienes problemas, prueba con `pip install googletrans` y si sigue fallando, busca una alternativa o fork más reciente).*
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `traductor_consola.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python traductor_consola.py
+    ```
+
+### ⌨️ Uso en la Terminal:
+
+1.  El programa te pedirá el **Idioma de Destino**. Escribe el código de dos letras (ej., `fr` para francés) o `?` para ver la lista.
+2.  Luego, te pedirá el **Texto a traducir**. Escribe tu texto.
+3.  El resultado traducido se mostrará inmediatamente.
+4.  Escribe **`salir`** en cualquier momento para finalizar la aplicación.
+
+# ¡Este es un traductor rápido y funcional directamente en tu terminal\!
+
+
+
+

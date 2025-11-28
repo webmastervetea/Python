@@ -1,0 +1,192 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **zipfile** para manejar la compresión y descompresión,
+
+# \# y **tkinter** para la interfaz gráfica que facilita la selección de archivos y carpetas.
+
+```python
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import zipfile
+import os
+import sys
+
+class CompresorDescompresorApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la lógica de ZIP.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la Ventana Principal
+        self.master = master
+        master.title("Compresor/Descompresor ZIP")
+        master.geometry("500x350")
+        master.config(padx=10, pady=10)
+
+        # 2. Construcción de la Interfaz
+        self.crear_widgets()
+
+    def crear_widgets(self):
+        """
+        Crea y coloca todos los widgets de la interfaz.
+        """
+        # --- TÍTULO ---
+        tk.Label(self.master, 
+                 text="Herramienta ZIP Simple", 
+                 font=('Arial', 14, 'bold')).pack(pady=5)
+        
+        # --- 1. COMPRESOR (Crear ZIP) ---
+        frame_compresor = tk.LabelFrame(self.master, text="Compresor (Crear ZIP)", padx=10, pady=10)
+        frame_compresor.pack(fill="x", pady=10)
+        
+        tk.Label(frame_compresor, text="Carpeta a Comprimir:").pack(anchor='w')
+        self.ruta_a_comprimir = tk.StringVar(value="Seleccionar carpeta de origen...")
+        tk.Entry(frame_compresor, textvariable=self.ruta_a_comprimir, state='readonly').pack(fill='x', pady=2)
+        
+        tk.Button(frame_compresor, 
+                  text="Seleccionar Carpeta", 
+                  command=self.seleccionar_origen).pack(pady=5)
+        
+        tk.Button(frame_compresor, 
+                  text="COMPRIMIR A ZIP", 
+                  command=self.comprimir_carpeta,
+                  bg='#4CAF50', fg='white', 
+                  font=('Arial', 10, 'bold')).pack(pady=5)
+
+        # --- 2. DESCOMPRESOR (Extraer ZIP) ---
+        frame_descompresor = tk.LabelFrame(self.master, text="Descompresor (Extraer ZIP)", padx=10, pady=10)
+        frame_descompresor.pack(fill="x", pady=10)
+
+        tk.Label(frame_descompresor, text="Archivo ZIP a Extraer:").pack(anchor='w')
+        self.ruta_zip = tk.StringVar(value="Seleccionar archivo .zip...")
+        tk.Entry(frame_descompresor, textvariable=self.ruta_zip, state='readonly').pack(fill='x', pady=2)
+        
+        tk.Button(frame_descompresor, 
+                  text="Seleccionar ZIP", 
+                  command=self.seleccionar_zip).pack(pady=5)
+        
+        tk.Button(frame_descompresor, 
+                  text="EXTRAER CONTENIDO", 
+                  command=self.descomprimir_archivo,
+                  bg='#2196F3', fg='white', 
+                  font=('Arial', 10, 'bold')).pack(pady=5)
+
+    # --- LÓGICA DE INTERFAZ ---
+
+    def seleccionar_origen(self):
+        """Abre el diálogo para seleccionar la carpeta a comprimir."""
+        ruta = filedialog.askdirectory(title="Selecciona la carpeta que deseas comprimir")
+        if ruta:
+            self.ruta_a_comprimir.set(ruta)
+            
+    def seleccionar_zip(self):
+        """Abre el diálogo para seleccionar el archivo ZIP a descomprimir."""
+        ruta = filedialog.askopenfilename(
+            title="Selecciona el archivo ZIP",
+            filetypes=[("Archivos ZIP", "*.zip")]
+        )
+        if ruta:
+            self.ruta_zip.set(ruta)
+
+    # --- LÓGICA DE COMPRESIÓN ---
+
+    def comprimir_carpeta(self):
+        """
+        Comprime la carpeta seleccionada a un archivo ZIP.
+        """
+        ruta_origen = self.ruta_a_comprimir.get()
+        
+        if not os.path.isdir(ruta_origen) or ruta_origen == "Seleccionar carpeta de origen...":
+            messagebox.showerror("Error", "Por favor, selecciona una carpeta válida para comprimir.")
+            return
+
+        # 1. Definir el archivo de salida (ZIP)
+        nombre_zip = os.path.basename(ruta_origen) + ".zip"
+        ruta_guardar = filedialog.asksaveasfilename(
+            defaultextension=".zip",
+            initialfile=nombre_zip,
+            title="Guardar archivo ZIP como...",
+            filetypes=[("Archivos ZIP", "*.zip")]
+        )
+        
+        if not ruta_guardar:
+            return # Operación cancelada por el usuario
+
+        try:
+            # 2. Crear el archivo ZIP
+            with zipfile.ZipFile(ruta_guardar, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                # 3. Recorrer la carpeta y subcarpetas (recursivamente)
+                for root, dirs, files in os.walk(ruta_origen):
+                    for file in files:
+                        ruta_archivo = os.path.join(root, file)
+                        # # La ruta_relativa es el nombre del archivo dentro del ZIP.
+                        # # # Esto elimina la ruta absoluta de la carpeta origen.
+                        ruta_relativa = os.path.relpath(ruta_archivo, ruta_origen)
+                        zipf.write(ruta_archivo, ruta_relativa)
+            
+            messagebox.showinfo("Éxito", f"Carpeta comprimida con éxito en:\n{ruta_guardar}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Fallo al comprimir la carpeta: {e}")
+
+    # --- LÓGICA DE DESCOMPRESIÓN ---
+
+    def descomprimir_archivo(self):
+        """
+        Descomprime el archivo ZIP seleccionado a una nueva carpeta.
+        """
+        ruta_zip = self.ruta_zip.get()
+
+        if not os.path.isfile(ruta_zip) or ruta_zip == "Seleccionar archivo .zip...":
+            messagebox.showerror("Error", "Por favor, selecciona un archivo ZIP válido para extraer.")
+            return
+            
+        # 1. Definir la carpeta de destino
+        ruta_destino = filedialog.askdirectory(title="Selecciona la carpeta donde extraer el contenido")
+
+        if not ruta_destino:
+            return # Operación cancelada por el usuario
+
+        try:
+            # 2. Abrir el archivo ZIP en modo lectura ('r')
+            with zipfile.ZipFile(ruta_zip, 'r') as zipf:
+                # 3. Extraer todo el contenido
+                zipf.extractall(ruta_destino)
+                
+            messagebox.showinfo("Éxito", f"Contenido extraído con éxito en:\n{ruta_destino}")
+            
+        except zipfile.BadZipFile:
+            messagebox.showerror("Error", "El archivo ZIP está corrupto o no es un archivo ZIP válido.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Fallo al descomprimir el archivo: {e}")
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    root = tk.Tk()
+    app = CompresorDescompresorApp(root)
+    print("# Compresor/Descompresor ZIP iniciado. Usa la interfaz para la gestión de archivos.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `zip_utility.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python zip_utility.py
+    ```
+3.  **Para Comprimir:**
+      * Haz clic en **"Seleccionar Carpeta"** y elige la carpeta que deseas convertir en ZIP.
+      * Haz clic en **"COMPRIMIR A ZIP"** y elige dónde guardar el nuevo archivo `.zip`.
+4.  **Para Descomprimir:**
+      * Haz clic en **"Seleccionar ZIP"** y elige el archivo `.zip` que deseas extraer.
+      * Haz clic en **"EXTRAER CONTENIDO"** y elige la carpeta de destino para el contenido.
+
+# El compresor utiliza el método de compresión `ZIP_DEFLATED`, que es el más común y eficiente para archivos.
+
+
+
+

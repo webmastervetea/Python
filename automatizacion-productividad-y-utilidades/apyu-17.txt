@@ -1,0 +1,153 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **datetime** para trabajar con fechas
+
+# \# y **tkinter** para crear una interfaz gráfica que facilite la entrada de datos.
+
+```python
+import os
+import sys
+import tkinter as tk
+from tkinter import messagebox
+from datetime import date, datetime
+from tkcalendar import DateEntry # Usaremos tkcalendar para un selector de fecha amigable
+
+# --- INSTRUCCIONES DE INSTALACIÓN ---
+# # Este script requiere la librería tkcalendar para el selector de fecha:
+# # pip install tkcalendar
+
+class CalculadoraDiasApp:
+    """
+    Clase principal que gestiona la GUI y la lógica de cálculo de fechas.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la Ventana Principal
+        self.master = master
+        master.title("Calculadora de Diferencia de Días")
+        master.geometry("400x300")
+        master.config(padx=15, pady=15)
+
+        # 2. Construcción de la Interfaz
+        self.crear_widgets()
+
+    def crear_widgets(self):
+        """
+        Crea y coloca todos los widgets de la interfaz.
+        """
+        # --- TÍTULO ---
+        tk.Label(self.master, 
+                 text="Diferencia entre Fechas", 
+                 font=('Arial', 14, 'bold')).pack(pady=10)
+        
+        # --- Selector de Fecha 1 ---
+        tk.Label(self.master, text="Fecha Inicial:").pack(pady=5)
+        # # DateEntry de tkcalendar proporciona un calendario desplegable
+        self.cal1 = DateEntry(self.master, selectmode='day', date_pattern='dd/mm/yyyy', locale='es_ES')
+        self.cal1.pack(pady=5)
+
+        # --- Selector de Fecha 2 ---
+        tk.Label(self.master, text="Fecha Final:").pack(pady=5)
+        self.cal2 = DateEntry(self.master, selectmode='day', date_pattern='dd/mm/yyyy', locale='es_ES')
+        self.cal2.pack(pady=5)
+        
+        # --- Botón de Cálculo ---
+        tk.Button(self.master, 
+                  text="CALCULAR DIFERENCIA", 
+                  command=self.calcular_diferencia,
+                  bg='#607D8B', fg='white', 
+                  font=('Arial', 10, 'bold')).pack(pady=20, fill='x')
+
+    def calcular_diferencia(self):
+        """
+        Obtiene las fechas de los selectores y calcula el tiempo transcurrido.
+        """
+        try:
+            # 1. Obtener las fechas como objetos 'date' de Python
+            fecha1 = self.cal1.get_date()
+            fecha2 = self.cal2.get_date()
+            
+            # 2. Calcular la diferencia (que retorna un objeto 'timedelta')
+            diferencia = fecha2 - fecha1
+            
+            dias = abs(diferencia.days)
+            
+            # 3. Determinar el orden y el mensaje
+            if diferencia.days < 0:
+                mensaje_principal = f"Han transcurrido {dias} días"
+                detalle = "La Fecha Inicial es posterior a la Final."
+            elif diferencia.days > 0:
+                mensaje_principal = f"Han transcurrido {dias} días"
+                detalle = "La Fecha Final es posterior a la Inicial."
+            else:
+                mensaje_principal = "Ambas fechas son la misma."
+                detalle = "Diferencia: 0 días."
+                
+            # 4. Cálculo de años y meses aproximados para el detalle
+            anos = dias // 365
+            meses = (dias % 365) // 30
+            
+            if dias > 30:
+                detalle_largo = f"Aproximadamente: {anos} años y {meses} meses."
+            else:
+                detalle_largo = "Menos de un mes de diferencia."
+
+
+            # 5. Mostrar el resultado
+            messagebox.showinfo(
+                "Resultado del Cálculo",
+                f"La diferencia es:\n\n{mensaje_principal}\n\nDetalle:\n{detalle_largo}"
+            )
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Fallo en el cálculo: {e}")
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    try:
+        # # Intentar importar tkcalendar
+        from tkcalendar import DateEntry 
+    except ImportError:
+        messagebox.showerror("Error de Librería", 
+                             "La librería tkcalendar es requerida. Ejecuta: pip install tkcalendar")
+        sys.exit(1)
+        
+    root = tk.Tk()
+    app = CalculadoraDiasApp(root)
+    print("# Calculadora de Diferencia de Días iniciada. Usa la interfaz para seleccionar las fechas.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    # # Para asegurar que el mensaje de error de dependencia se muestre si falla
+    try:
+        from tkcalendar import DateEntry
+    except ImportError:
+        root_temp = tk.Tk()
+        root_temp.withdraw()
+        messagebox.showerror("Error Crítico", 
+                             "Falta la librería 'tkcalendar'. Por favor, instálala con: pip install tkcalendar")
+        sys.exit(1)
+        
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `tkcalendar`:**
+    ```bash
+    pip install tkcalendar
+    ```
+      * *(El módulo `tkinter` viene incluido con Python, pero `tkcalendar` no).*
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `calculadora_dias.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python calculadora_dias.py
+    ```
+4.  **Usa el Calendario:** Haz clic en los campos de fecha ("Fecha Inicial" y "Fecha Final") para que se despliegue un calendario visual y puedas seleccionar las fechas fácilmente.
+5.  **Calcula:** Presiona **"CALCULAR DIFERENCIA"** para ver el número exacto de días transcurridos o restantes.
+
+# El script utiliza `datetime.date` para realizar la resta de fechas, lo que resulta en un objeto `timedelta` que contiene el número exacto de días.
+
+
+
+

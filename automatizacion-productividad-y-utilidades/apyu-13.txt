@@ -1,0 +1,162 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **os** para interactuar con el sistema de archivos
+
+# \# y Tkinter para la interfaz gráfica. No requiere librerías externas.
+
+```python
+import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+# --- CONFIGURACIÓN Y UTILIDADES ---
+
+# # Número de resultados principales a mostrar
+TOP_N = 15
+
+def get_folder_size(start_path):
+    """
+    Calcula recursivamente el tamaño total de una carpeta.
+
+    :param start_path: La ruta de la carpeta de inicio.
+    :return: El tamaño total en bytes.
+    """
+    total_size = 0
+    
+    # # os.walk genera los nombres de archivo en un árbol de directorios
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            ruta_completa = os.path.join(dirpath, f)
+            # # Ignorar enlaces simbólicos para evitar bucles infinitos
+            if not os.path.islink(ruta_completa):
+                try:
+                    # # Sumar el tamaño de cada archivo
+                    total_size += os.path.getsize(ruta_completa)
+                except Exception:
+                    # # Ignorar archivos a los que no se puede acceder
+                    pass
+    return total_size
+
+def bytes_to_human_readable(size_bytes):
+    """
+    Convierte un tamaño en bytes a un formato legible (KB, MB, GB, etc.).
+    """
+    if size_bytes == 0:
+        return "0 Bytes"
+    
+    # # Las unidades de medida de disco (base 1024)
+    unidades = ("Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    
+    # # Calcular el índice de la unidad
+    i = 0
+    size = size_bytes
+    while size >= 1024 and i < len(unidades) - 1:
+        size /= 1024
+        i += 1
+        
+    return f"{size:.2f} {unidades[i]}"
+
+def analizar_uso_disco(directorio_raiz):
+    """
+    Escanea la carpeta raíz y lista las carpetas y archivos más grandes.
+    
+    :param directorio_raiz: La ruta de la carpeta a escanear.
+    """
+    if not os.path.isdir(directorio_raiz):
+        messagebox.showerror("Error", "Ruta de directorio no válida.")
+        return
+
+    print(f"\n# 🔍 Iniciando análisis de uso de disco en: {directorio_raiz}")
+    
+    # # Almacenar los resultados: (tamaño_bytes, ruta)
+    elementos = []
+    
+    # 1. Analizar subcarpetas (Nivel 1)
+    try:
+        # # Recorrer solo los elementos del directorio raíz
+        for nombre in os.listdir(directorio_raiz):
+            ruta_completa = os.path.join(directorio_raiz, nombre)
+            
+            if os.path.islink(ruta_completa):
+                continue
+                
+            if os.path.isdir(ruta_completa):
+                # # Si es una carpeta, calcular el tamaño recursivamente
+                size = get_folder_size(ruta_completa)
+                elementos.append((size, ruta_completa))
+            elif os.path.isfile(ruta_completa):
+                # # Si es un archivo, obtener el tamaño directamente
+                size = os.path.getsize(ruta_completa)
+                elementos.append((size, ruta_completa))
+                
+    except Exception as e:
+        print(f"# ❌ Error al acceder al directorio: {e}")
+        messagebox.showerror("Error de Acceso", f"No se pudo acceder a {directorio_raiz}. Revisa los permisos.")
+        return
+
+    # 2. Ordenar los resultados por tamaño (descendente)
+    # # `key=lambda x: x[0]` indica que la ordenación debe basarse en el primer elemento de la tupla (el tamaño).
+    elementos.sort(key=lambda x: x[0], reverse=True)
+
+    # 3. Mostrar los resultados
+    print(f"\n# --- TOP {TOP_N} ELEMENTOS POR USO DE DISCO ---")
+    
+    # # Obtener el tamaño total del directorio raíz para calcular el porcentaje
+    total_root_size = get_folder_size(directorio_raiz)
+    
+    # # Mostrar la lista
+    for i, (size, ruta) in enumerate(elementos[:TOP_N]):
+        if size == 0:
+            continue
+            
+        porcentaje = (size / total_root_size) * 100 if total_root_size > 0 else 0
+        tipo = "📁 Carpeta" if os.path.isdir(ruta) else "📄 Archivo"
+        
+        # # Formatear la salida
+        tamano_legible = bytes_to_human_readable(size)
+        
+        print(f"#{i+1:02d}. {tipo:<9} | {tamano_legible:<10} | {porcentaje:5.2f}% | {ruta}")
+
+    print("--------------------------------------------------")
+    print(f"# Tamaño Total Analizado: {bytes_to_human_readable(total_root_size)}")
+    print("# Análisis finalizado.")
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar carpeta) ---
+
+def main():
+    # # Inicializar Tkinter para el diálogo gráfico
+    root = tk.Tk()
+    root.withdraw() 
+    
+    print("# --- MONITOR DE USO DE DISCO ---")
+    
+    # # Abrir diálogo para seleccionar la carpeta a escanear
+    directorio_a_escanear = filedialog.askdirectory(title="Seleccione la carpeta raíz a analizar")
+    
+    if not directorio_a_escanear:
+        print("# Operación cancelada por el usuario. Saliendo.")
+        sys.exit(0)
+        
+    analizar_uso_disco(directorio_a_escanear)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `monitor_disco.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python monitor_disco.py
+    ```
+3.  **Selecciona la Carpeta:** Se abrirá una ventana de diálogo pidiéndote que elijas la carpeta o unidad que deseas analizar. **Ten en cuenta:** Analizar unidades completas o carpetas muy grandes tomará tiempo, ya que el script debe examinar recursivamente cada archivo.
+4.  **Revisa los Resultados:** El script imprimirá en la consola la lista de las **15 carpetas o archivos más grandes** que encontró, mostrando su tamaño en un formato legible (KB, MB, GB), el porcentaje que representa del total analizado, y la ruta completa.
+
+# La función `get_folder_size` se encarga de calcular el tamaño total de una carpeta incluyendo todos sus archivos y subcarpetas.
+
+
+
+

@@ -1,0 +1,241 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **pandas** esté instalada.
+
+# \# Puedes instalarla con `pip install pandas`.
+
+```python
+import pandas as pd
+import os
+import sys
+
+# --- CONFIGURACIÓN Y UTILIDADES ---
+
+# # Número de filas a mostrar por página
+FILAS_POR_PAGINA = 15 
+
+def cargar_csv(ruta_archivo):
+    """
+    Carga un archivo CSV en un DataFrame de pandas.
+    """
+    try:
+        # # Intentar cargar el archivo. `low_memory=False` ayuda con archivos grandes.
+        df = pd.read_csv(ruta_archivo, low_memory=False)
+        print(f"# ✅ Archivo cargado con {len(df)} filas y {len(df.columns)} columnas.")
+        return df
+    except FileNotFoundError:
+        print(f"# ❌ ERROR: Archivo no encontrado en la ruta: {ruta_archivo}")
+        return None
+    except pd.errors.EmptyDataError:
+        print("# ❌ ERROR: El archivo CSV está vacío o no tiene datos válidos.")
+        return None
+    except Exception as e:
+        print(f"# ❌ ERROR al leer el CSV: {e}")
+        return None
+
+def mostrar_ayuda():
+    """
+    Muestra los comandos disponibles para el usuario.
+    """
+    print("\n# --- COMANDOS DISPONIBLES ---")
+    print("# 'cols': Muestra las columnas disponibles y sus tipos de datos.")
+    print("# 'ver [página]': Muestra la página de datos especificada (Ej: ver 2).")
+    print("# 'ordenar [columna] [asc/desc]': Ordena los datos (Ej: ordenar Edad desc).")
+    print("# 'buscar [columna] [valor]': Filtra filas donde la columna contenga el valor.")
+    print("# 'reset': Vuelve a la vista original (sin ordenar ni buscar).")
+    print("# 'salir': Termina la aplicación.")
+    print("# ----------------------------")
+
+def mostrar_df(df, pagina=1):
+    """
+    Muestra una página específica del DataFrame en la terminal.
+    """
+    total_filas = len(df)
+    
+    if total_filas == 0:
+        print("# ⚠️ El conjunto de datos actual está vacío. Intenta con 'reset'.")
+        return
+        
+    total_paginas = (total_filas + FILAS_POR_PAGINA - 1) // FILAS_POR_PAGINA
+    
+    if pagina < 1 or pagina > total_paginas:
+        print(f"# ⚠️ Número de página inválido. Debe estar entre 1 y {total_paginas}.")
+        return
+
+    # # Calcular los índices de inicio y fin para la página
+    inicio = (pagina - 1) * FILAS_POR_PAGINA
+    fin = min(pagina * FILAS_POR_PAGINA, total_filas)
+    
+    # # Imprimir la página seleccionada
+    print(f"\n# --- Datos (Página {pagina}/{total_paginas}) ---")
+    print(df.iloc[inicio:fin])
+    print(f"--------------------------------------------------")
+    print(f"# Filas mostradas: {inicio + 1} a {fin} de {total_filas} | Total columnas: {len(df.columns)}")
+
+
+def procesar_comando(comando, df_original, df_actual):
+    """
+    Analiza el comando ingresado por el usuario y ejecuta la acción correspondiente.
+    """
+    partes = comando.lower().split()
+    cmd = partes[0]
+
+    if cmd == 'salir':
+        return df_actual, True # Retorna True para indicar que debe salir
+
+    elif cmd == 'cols':
+        print("\n# --- COLUMNAS Y TIPOS DE DATOS ---")
+        print(df_actual.dtypes)
+        return df_actual, False
+
+    elif cmd == 'ver':
+        pagina = int(partes[1]) if len(partes) > 1 and partes[1].isdigit() else 1
+        mostrar_df(df_actual, pagina)
+        return df_actual, False
+
+    elif cmd == 'ordenar':
+        if len(partes) < 2:
+            print("# ⚠️ Uso: ordenar [columna] [asc/desc]")
+            return df_actual, False
+        
+        columna = partes[1]
+        ascendente = partes[2] == 'asc' if len(partes) > 2 else True # Por defecto ascendente
+        
+        if columna not in df_actual.columns:
+            print(f"# ❌ Columna '{columna}' no encontrada. Usa 'cols' para ver las disponibles.")
+            return df_actual, False
+
+        # # Crear una nueva copia ordenada del DataFrame
+        df_nuevo = df_actual.sort_values(by=columna, ascending=ascendente, kind='mergesort')
+        print(f"# ✅ Datos ordenados por '{columna}' ({'Ascendente' if ascendente else 'Descendente'}).")
+        mostrar_df(df_nuevo, 1)
+        return df_nuevo, False
+
+    elif cmd == 'buscar':
+        if len(partes) < 3:
+            print("# ⚠️ Uso: buscar [columna] [valor]")
+            return df_actual, False
+
+        columna = partes[1]
+        valor = partes[2] # El valor a buscar (Ej: 'john' o 'nueva york')
+
+        if columna not in df_actual.columns:
+            print(f"# ❌ Columna '{columna}' no encontrada. Usa 'cols' para ver las disponibles.")
+            return df_actual, False
+
+        try:
+            # # Convertir la columna a string (para asegurar que 'contains' funcione en todos los tipos)
+            # # Luego, usar .str.contains() para buscar la subcadena (no sensible a mayúsculas/minúsculas)
+            mascara = df_original[columna].astype(str).str.contains(valor, case=False, na=False)
+            df_nuevo = df_original[mascara].copy() # Usar el df_original para buscar en todo el set
+
+            print(f"# ✅ Filtrado aplicado: Se encontraron {len(df_nuevo)} filas con '{valor}' en '{columna}'.")
+            mostrar_df(df_nuevo, 1)
+            return df_nuevo, False
+            
+        except Exception as e:
+            print(f"# ❌ Error al buscar. Asegúrate de que los tipos de datos sean compatibles: {e}")
+            return df_actual, False
+
+    elif cmd == 'reset':
+        print("# ✅ Vista reiniciada al DataFrame original.")
+        mostrar_df(df_original, 1)
+        return df_original.copy(), False
+
+    elif cmd == 'ayuda' or cmd == '?':
+        mostrar_ayuda()
+        return df_actual, False
+
+    else:
+        print(f"# ❓ Comando desconocido: '{cmd}'. Escribe 'ayuda' para ver los comandos.")
+        return df_actual, False
+
+
+# --- FUNCIÓN PRINCIPAL DEL LECTOR ---
+
+def iniciar_lector_csv():
+    """
+    Función principal que gestiona el bucle de la aplicación.
+    """
+    # # Usar Tkinter para el diálogo de selección de archivo
+    root = tk.Tk()
+    root.withdraw() 
+
+    print("# --- LECTOR DE CSV AVANZADO (Pandas) ---")
+    
+    # # Abrir diálogo para seleccionar el archivo CSV
+    ruta_archivo = filedialog.askopenfilename(
+        title="Seleccione un archivo CSV para analizar",
+        filetypes=[("Archivos CSV", "*.csv")]
+    )
+    
+    if not ruta_archivo:
+        print("# Operación cancelada por el usuario. Saliendo.")
+        sys.exit(0)
+
+    # 1. Cargar el DataFrame
+    df_original = cargar_csv(ruta_archivo)
+    
+    if df_original is None:
+        sys.exit(1)
+
+    # 2. Inicializar la vista actual (copia del original)
+    df_actual = df_original.copy()
+    
+    # 3. Iniciar el bucle de comandos
+    mostrar_ayuda()
+    mostrar_df(df_actual, 1)
+    
+    salir = False
+    while not salir:
+        comando = input("\n[CSV Analyzer] > ").strip()
+        if comando:
+            df_actual, salir = procesar_comando(comando, df_original, df_actual)
+
+    print("# Saliendo del Lector de CSV. ¡Adiós!")
+
+
+if __name__ == "__main__":
+    # # Verificar dependencias
+    try:
+        import pandas as pd
+    except ImportError:
+        print("# ERROR: La librería pandas es requerida.")
+        print("# Por favor, instala pandas: pip install pandas")
+        sys.exit(1)
+        
+    iniciar_lector_csv()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `pandas`:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install pandas
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `lector_csv_avanzado.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python lector_csv_avanzado.py
+    ```
+4.  **Selecciona el CSV:** Se abrirá una ventana de diálogo. Selecciona cualquier archivo `.csv` que quieras analizar.
+5.  **Usa los Comandos:** Una vez cargado, verás la primera página de datos y el *prompt* `[CSV Analyzer] >`.
+
+-----
+
+## Ejemplos de Comandos en la Terminal:
+
+| Comando | Acción |
+| :--- | :--- |
+| `cols` | Muestra los nombres de las columnas y su tipo de dato. |
+| `ver 5` | Muestra la quinta página de datos. |
+| `ordenar Edad desc` | Ordena los datos por la columna 'Edad' en orden descendente. |
+| `buscar Ciudad Nueva York` | Filtra los datos para mostrar solo las filas que contienen "Nueva York" en la columna 'Ciudad'. |
+| `reset` | Elimina el ordenamiento o filtro actual y vuelve a la vista original. |
+| `salir` | Cierra la aplicación. |
+
+# ¡Este es un analizador de datos muy potente para la terminal\!
+
+
+
+

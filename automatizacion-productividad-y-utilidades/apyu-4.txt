@@ -1,0 +1,137 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **shutil** para la copia recursiva de directorios y
+
+# \# **os** y **datetime** para la gestión de rutas y marcas de tiempo.
+
+```python
+import shutil
+import os
+from datetime import datetime
+import sys
+from tkinter import Tk, filedialog, messagebox
+
+# --- CONFIGURACIÓN ---
+
+# # Rutas que se utilizarán para la copia de seguridad.
+# # # NOTA: ¡DEBES REEMPLAZAR ESTAS RUTAS CON LAS TUYAS!
+RUTAS_ORIGEN = [
+    os.path.expanduser("~/Documentos/Importantes"), # Ejemplo de carpeta en Documentos (funciona en Win/Linux/Mac)
+    os.path.expanduser("~/MisImagenes/Vacaciones"),    # Otro ejemplo de ruta a una carpeta de imágenes
+]
+
+# # Ruta donde se guardarán las copias de seguridad.
+# # # Recomendado: una unidad externa, una carpeta en la nube o un servidor.
+# # # Ejemplo: Una carpeta llamada 'Backups' en el escritorio.
+RUTA_DESTINO_BASE = os.path.expanduser("~/Desktop/MiBackupSimple")
+
+
+def ejecutar_copia_seguridad(origenes, destino_base):
+    """
+    Coordina el proceso de copia de seguridad creando una carpeta con marca de tiempo.
+
+    :param origenes: Lista de rutas de directorios a copiar.
+    :param destino_base: Directorio donde se crearán las carpetas de backup.
+    :return: True si la operación fue exitosa.
+    """
+    
+    # 1. Crear la carpeta de destino con marca de tiempo
+    # # Generar la marca de tiempo en formato YYYYMMDD_HHMMSS
+    marca_tiempo = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # # Construir la ruta final de la copia de seguridad (e.g., /Destino/Backup_20251127_093000)
+    ruta_destino_final = os.path.join(destino_base, f"Backup_{marca_tiempo}")
+    
+    print(f"# ⏳ Iniciando copia de seguridad...")
+    print(f"# Destino de la copia: {ruta_destino_final}")
+    
+    # # Asegurarse de que el directorio base exista
+    try:
+        os.makedirs(ruta_destino_final, exist_ok=True)
+    except Exception as e:
+        print(f"# ERROR: No se pudo crear el directorio de destino: {e}")
+        messagebox.showerror("Error Crítico", f"No se pudo crear la carpeta de destino: {ruta_destino_final}")
+        return False
+    
+    copias_exitosas = 0
+    
+    # 2. Copiar cada directorio de origen
+    for ruta_origen in origenes:
+        # # Extraer solo el nombre de la carpeta (e.g., "Importantes")
+        nombre_carpeta = os.path.basename(ruta_origen.rstrip(os.sep))
+        ruta_destino_carpeta = os.path.join(ruta_destino_final, nombre_carpeta)
+        
+        print(f"# Copiando: '{ruta_origen}' a '{nombre_carpeta}'...")
+        
+        if not os.path.exists(ruta_origen):
+            print(f"# ⚠️ Advertencia: La ruta de origen no existe y se omitirá: {ruta_origen}")
+            continue
+            
+        try:
+            # # shutil.copytree: Copia recursivamente todo el árbol de directorios.
+            # # # `dirs_exist_ok=True` permite que la copia se realice incluso si el destino existe
+            # # # (aunque no debería existir ya que la marca de tiempo es única).
+            shutil.copytree(ruta_origen, ruta_destino_carpeta, dirs_exist_ok=True)
+            copias_exitosas += 1
+            print(f"# ✅ Copia exitosa de: {nombre_carpeta}")
+            
+        except shutil.Error as e:
+            print(f"# ❌ ERROR al copiar {nombre_carpeta}: {e}")
+        except Exception as e:
+            print(f"# ❌ ERROR inesperado al copiar {nombre_carpeta}: {e}")
+
+    # 3. Mostrar el resultado final
+    if copias_exitosas == len(origenes):
+        mensaje = f"🎉 Copia de seguridad COMPLETADA con éxito de {copias_exitosas} rutas."
+        print(f"\n{mensaje}")
+        return True
+    else:
+        mensaje = f"❌ Copia de seguridad FINALIZADA. {copias_exitosas} de {len(origenes)} rutas copiadas con éxito."
+        print(f"\n{mensaje}")
+        return False
+
+# --- Bloque Principal de Ejecución (con diálogo de confirmación de ruta) ---
+
+def main():
+    # # Inicializar Tkinter para los diálogos gráficos
+    root = Tk()
+    root.withdraw() 
+    
+    print("# --- COPIA DE SEGURIDAD SIMPLE ---")
+    
+    # 1. Mostrar la configuración y pedir confirmación
+    print("## Configuración actual:")
+    print(f"# - Orígenes: {RUTAS_ORIGEN}")
+    print(f"# - Destino Base: {RUTA_DESTINO_BASE}")
+    
+    respuesta = messagebox.askyesno(
+        "Confirmar Copia de Seguridad",
+        f"¿Desea iniciar la copia de seguridad de las {len(RUTAS_ORIGEN)} rutas definidas a:\n{RUTA_DESTINO_BASE}\n\n(Asegúrese de que las rutas de origen sean correctas antes de continuar)"
+    )
+
+    if respuesta:
+        ejecutar_copia_seguridad(RUTAS_ORIGEN, RUTA_DESTINO_BASE)
+    else:
+        print("# Operación de copia de seguridad cancelada por el usuario.")
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones Cruciales para Usar el Programa
+
+1.  **Edita las Rutas:**
+      * **Antes de ejecutar**, debes modificar las rutas dentro de la sección **`RUTAS_ORIGEN`** para apuntar a las carpetas que realmente quieres respaldar.
+      * Modifica **`RUTA_DESTINO_BASE`** para que apunte a tu unidad externa o carpeta de backup deseada.
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `backup_simple.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python backup_simple.py
+    ```
+4.  **Confirma:** Aparecerá una ventana de confirmación antes de que comience el proceso de copia.
+
+# Cada vez que ejecutes este script, creará una **nueva carpeta** dentro de `RUTA_DESTINO_BASE` con la fecha y hora exacta, garantizando que nunca sobrescribas una copia de seguridad anterior.
+
+
+
+

@@ -1,0 +1,167 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza la librería **Pillow (PIL)** para imágenes y **mutagen** para archivos de audio.
+
+# \# Necesitas instalar ambas: `pip install Pillow mutagen`.
+
+# \# Usamos `os` y `tkinter` para la selección de archivos.
+
+```python
+import os
+import sys
+from tkinter import Tk, filedialog, messagebox
+from PIL import Image # Para metadatos Exif de imágenes
+from mutagen.easyid3 import EasyID3 # Para metadatos ID3 de MP3
+
+def extraer_metadatos_imagen(ruta_archivo):
+    """
+    Extrae metadatos Exif comunes (fecha, modelo de cámara) de archivos JPG/TIFF.
+    
+    :param ruta_archivo: Ruta del archivo de imagen.
+    :return: Diccionario con los metadatos importantes o None si falla.
+    """
+    datos = {}
+    try:
+        with Image.open(ruta_archivo) as img:
+            # # Pillow almacena los metadatos en un diccionario 'exif'
+            exif_data = img._getexif() 
+            
+            if exif_data is not None:
+                # # Los metadatos Exif usan códigos numéricos. Aquí mapeamos algunos comunes:
+                # # # 36867: DateTimeOriginal (Fecha y Hora de toma de la foto)
+                # # # 271: Make (Fabricante de la cámara)
+                # # # 272: Model (Modelo de la cámara)
+                
+                # # Obtener el valor para cada código, si existe
+                datos['Tipo'] = 'Imagen (EXIF)'
+                datos['Fecha y Hora Original'] = exif_data.get(36867, 'N/A')
+                datos['Fabricante'] = exif_data.get(271, 'N/A')
+                datos['Modelo de Cámara'] = exif_data.get(272, 'N/A')
+                
+                # # Algunos campos devuelven bytes, convertirlos a string si es necesario
+                for key, value in datos.items():
+                    if isinstance(value, bytes):
+                        datos[key] = value.decode('utf-8', errors='ignore')
+
+        return datos
+        
+    except FileNotFoundError:
+        return {'Error': 'Archivo no encontrado.'}
+    except AttributeError:
+        # # No hay datos Exif disponibles en este archivo
+        return {'Tipo': 'Imagen (Sin EXIF)', 'Mensaje': 'No se encontraron metadatos Exif.'}
+    except Exception as e:
+        return {'Error': f'Fallo al leer la imagen: {e}'}
+
+
+def extraer_metadatos_mp3(ruta_archivo):
+    """
+    Extrae metadatos ID3 comunes (artista, título, álbum) de archivos MP3.
+    
+    :param ruta_archivo: Ruta del archivo MP3.
+    :return: Diccionario con los metadatos importantes o None si falla.
+    """
+    datos = {}
+    try:
+        # # EasyID3 simplifica el acceso a las etiquetas ID3
+        audio = EasyID3(ruta_archivo)
+        
+        datos['Tipo'] = 'Audio (MP3 ID3)'
+        
+        # # Los valores son listas, tomamos el primer elemento si existe
+        datos['Título'] = audio.get('title', ['N/A'])[0]
+        datos['Artista'] = audio.get('artist', ['N/A'])[0]
+        datos['Álbum'] = audio.get('album', ['N/A'])[0]
+        datos['Año'] = audio.get('date', ['N/A'])[0]
+        datos['Género'] = audio.get('genre', ['N/A'])[0]
+        
+        return datos
+        
+    except FileNotFoundError:
+        return {'Error': 'Archivo no encontrado.'}
+    except Exception as e:
+        # # Puede fallar si el archivo no es un MP3 válido o no tiene etiquetas ID3
+        return {'Error': f'Fallo al leer el MP3/ID3: {e}'}
+
+
+def seleccionar_archivo_y_extraer():
+    """
+    Abre un diálogo, selecciona un archivo y llama a la función de extracción adecuada.
+    """
+    # # Ocultar la ventana raíz de Tkinter (solo la necesitamos para el diálogo)
+    root = Tk()
+    root.withdraw() 
+    
+    print("# --- EXTRACTOR DE METADATOS ---")
+    
+    # # Abrir diálogo para seleccionar un archivo
+    ruta_archivo = filedialog.askopenfilename(
+        title="Seleccione un archivo (.jpg, .mp3, etc.)",
+        filetypes=[
+            ("Archivos de Imagen", "*.jpg *.jpeg *.png *.tiff"),
+            ("Archivos de Audio", "*.mp3"),
+            ("Todos los archivos", "*.*")
+        ]
+    )
+    
+    if not ruta_archivo:
+        print("# Operación cancelada por el usuario.")
+        return
+
+    # 1. Determinar el tipo de archivo y la función a usar
+    extension = os.path.splitext(ruta_archivo)[1].lower()
+    metadatos = None
+    
+    if extension in ['.jpg', '.jpeg', '.tiff']:
+        metadatos = extraer_metadatos_imagen(ruta_archivo)
+    elif extension == '.mp3':
+        metadatos = extraer_metadatos_mp3(ruta_archivo)
+    else:
+        metadatos = {'Tipo': 'Desconocido', 'Mensaje': 'Formato no soportado por este script.'}
+
+    # 2. Mostrar resultados
+    print(f"\n## 🔍 Metadatos de: {os.path.basename(ruta_archivo)}")
+    
+    if metadatos:
+        for clave, valor in metadatos.items():
+            print(f"# - {clave}: {valor}")
+    else:
+        print("# No se pudieron extraer metadatos.")
+        
+    print("\n# --- EXTRACCIÓN FINALIZADA ---")
+
+
+# --- Bloque Principal de Ejecución ---
+
+if __name__ == "__main__":
+    # # Verificar dependencias antes de intentar ejecutar
+    try:
+        import PIL
+        import mutagen
+    except ImportError:
+        print("# ERROR: Faltan librerías requeridas.")
+        print("# Por favor, instala Pillow y mutagen:")
+        print("# pip install Pillow mutagen")
+        sys.exit(1)
+        
+    seleccionar_archivo_y_extraer()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala las librerías necesarias:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install Pillow mutagen
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `extractor_metadata.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python extractor_metadata.py
+    ```
+4.  **Selecciona el Archivo:** Se abrirá una ventana de diálogo pidiéndote que elijas un archivo.
+5.  **Revisa los Resultados:** El script imprimirá los metadatos relevantes directamente en la consola.
+
+# El script está diseñado para diferenciar entre archivos de imagen que usan **Exif** (Pillow) y archivos de audio que usan **ID3** (mutagen).
+
+
+

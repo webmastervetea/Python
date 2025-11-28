@@ -1,0 +1,185 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo estándar **`hashlib`** para calcular el hash y **`os`** para navegar por el sistema de archivos.
+
+```python
+import hashlib
+import os
+from collections import defaultdict
+from tkinter import filedialog, Tk, messagebox
+
+def calcular_hash_archivo(ruta_archivo, algoritmo='sha256', tamaño_bloque=65536):
+    """
+    Calcula el hash criptográfico de un archivo grande.
+
+    :param ruta_archivo: La ruta completa al archivo.
+    :param algoritmo: El algoritmo de hash a usar ('sha256' es un buen estándar).
+    :param tamaño_bloque: Tamaño del bloque (en bytes) para leer el archivo.
+    :return: El resumen del hash en formato hexadecimal o None si hay error.
+    """
+    # 1. Inicializar el objeto hash
+    try:
+        hasher = hashlib.new(algoritmo)
+    except ValueError:
+        print(f"Error: Algoritmo de hash '{algoritmo}' no soportado.")
+        return None
+
+    # 2. Leer el archivo en bloques
+    try:
+        # # Abre el archivo en modo binario ('rb')
+        with open(ruta_archivo, 'rb') as archivo:
+            # # Leer el primer bloque
+            buffer = archivo.read(tamaño_bloque)
+            # # Bucle para leer todo el archivo
+            while len(buffer) > 0:
+                hasher.update(buffer)
+                buffer = archivo.read(tamaño_bloque)
+                
+        # 3. Devolver el hash final
+        return hasher.hexdigest()
+        
+    except FileNotFoundError:
+        # # Archivo no encontrado, lo ignoramos y devolvemos None
+        return None
+    except Exception as e:
+        # # Otros errores de lectura o permiso
+        print(f"Error al procesar el archivo {ruta_archivo}: {e}")
+        return None
+
+
+def escanear_directorio_en_busca_de_duplicados(directorio_raiz):
+    """
+    Escanea un directorio y sus subdirectorios para encontrar archivos duplicados.
+    
+    :param directorio_raiz: La ruta de la carpeta a escanear.
+    :return: Un diccionario donde la clave es el hash y el valor es una lista de rutas de archivo.
+    """
+    # # `defaultdict(list)` crea un diccionario donde el valor por defecto de una clave 
+    # # # nueva es una lista vacía. Esto simplifica la adición de rutas al hash.
+    hashes_por_tamaño = defaultdict(list)
+    hashes_por_contenido = defaultdict(list)
+    
+    contador_archivos = 0
+    
+    print(f"# Paso 1: Escaneando archivos y agrupando por tamaño en: {directorio_raiz}")
+
+    # 1. Primera pasada: Agrupar por tamaño (Optimización)
+    # # Itera a través de todos los archivos en el directorio_raiz y sus subdirectorios
+    for dirpath, dirnames, filenames in os.walk(directorio_raiz):
+        for nombre_archivo in filenames:
+            ruta_completa = os.path.join(dirpath, nombre_archivo)
+            
+            # # Ignorar enlaces simbólicos (para evitar bucles o errores de permisos)
+            if not os.path.islink(ruta_completa):
+                try:
+                    # # Obtener el tamaño del archivo
+                    tamaño = os.path.getsize(ruta_completa)
+                    hashes_por_tamaño[tamaño].append(ruta_completa)
+                    contador_archivos += 1
+                except Exception:
+                    # # Ignorar archivos con problemas de permiso/acceso
+                    pass
+
+    print(f"# Encontrados {contador_archivos} archivos. {len(hashes_por_tamaño)} tamaños únicos.")
+    print("# Paso 2: Calculando hashes para archivos con tamaño duplicado...")
+
+    # 2. Segunda pasada: Calcular hash solo para grupos con más de un archivo
+    archivos_procesados_hash = 0
+    for tamaño, rutas in hashes_por_tamaño.items():
+        # # Solo nos interesa procesar los grupos donde el tamaño se repite (> 1 archivo)
+        if len(rutas) > 1:
+            for ruta in rutas:
+                # # Calcular el hash SHA256 para el contenido
+                archivo_hash = calcular_hash_archivo(ruta)
+                archivos_procesados_hash += 1
+                
+                if archivo_hash:
+                    hashes_por_contenido[archivo_hash].append(ruta)
+                    
+    print(f"# {archivos_procesados_hash} archivos con tamaño repetido procesados por hash.")
+
+    # 3. Filtrar y devolver solo los duplicados reales (hash repetido)
+    duplicados = {
+        hash_val: rutas 
+        for hash_val, rutas in hashes_por_contenido.items() 
+        if len(rutas) > 1
+    }
+
+    return duplicados
+
+
+def mostrar_resultados(duplicados):
+    """
+    Muestra los resultados de la búsqueda en la consola.
+    """
+    total_grupos = len(duplicados)
+    total_duplicados = sum(len(rutas) - 1 for rutas in duplicados.values())
+    
+    print("\n# === RESULTADOS DE ARCHIVOS DUPLICADOS ===")
+    
+    if total_grupos == 0:
+        print("# ¡Éxito! No se encontraron archivos idénticos por hash en el directorio.")
+        return
+
+    print(f"## ❗ Encontrados {total_grupos} grupos de archivos duplicados.")
+    print(f"## 🗑️ Total de archivos duplicados (excluyendo el original): {total_duplicados}\n")
+
+    # # Imprimir los grupos de duplicados
+    for i, (hash_val, rutas) in enumerate(duplicados.items()):
+        print(f"### Grupo {i+1} (Hash: {hash_val[:10]}...):")
+        # # La primera ruta es el "original" (aunque todos son iguales)
+        print(f"# Archivo Original (Mantener): {rutas[0]}")
+        # # El resto son los duplicados a considerar eliminar
+        print("# --- Duplicados a Eliminar ---")
+        for ruta_duplicada in rutas[1:]:
+            print(f"# -> {ruta_duplicada}")
+        print("# ----------------------------------\n")
+        
+    print("# === FIN DEL ANÁLISIS ===")
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar carpeta) ---
+
+def main():
+    # # Ocultar la ventana raíz de Tkinter (solo la necesitamos para el diálogo)
+    root = Tk()
+    root.withdraw() 
+    
+    print("# --- DETECTOR DE ARCHIVOS DUPLICADOS ---")
+    
+    # # Abrir diálogo para seleccionar la carpeta a escanear
+    directorio_a_escanear = filedialog.askdirectory(title="Seleccione el directorio raíz a escanear")
+    
+    if not directorio_a_escanear:
+        print("# Operación cancelada por el usuario.")
+        return
+        
+    if not os.path.isdir(directorio_a_escanear):
+        messagebox.showerror("Error", "La ruta seleccionada no es un directorio válido.")
+        return
+
+    # # Ejecutar el escaneo
+    duplicados_encontrados = escanear_directorio_en_busca_de_duplicados(directorio_a_escanear)
+    
+    # # Mostrar los resultados
+    mostrar_resultados(duplicados_encontrados)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `detector_duplicados.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python detector_duplicados.py
+    ```
+3.  **Selecciona la Carpeta:** Se abrirá una ventana de diálogo pidiéndote que selecciones la carpeta que deseas escanear (incluirá subcarpetas).
+4.  **Revisa los Resultados:** El script imprimirá en la consola los grupos de archivos idénticos que encontró, junto con su hash y la ruta de cada duplicado.
+
+# La aplicación utiliza una **optimización de dos fases**: primero agrupa los archivos por **tamaño** y solo calcula el hash (`sha256`) para aquellos grupos que tienen más de un archivo. Esto reduce drásticamente el tiempo de procesamiento, ya que los archivos con diferente tamaño nunca pueden ser duplicados.
+
+
+
+

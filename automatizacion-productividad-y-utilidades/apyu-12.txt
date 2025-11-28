@@ -1,0 +1,173 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza la librería **google-api-python-client** para interactuar con Google Drive.
+
+# \# La configuración es la parte más compleja, ya que requiere credenciales OAuth 2.0.
+
+## ⚠️ Pasos Previos Necesarios (¡CRUCIALES\!)
+
+# \# 1. **Activar la API de Google Drive:** Ve a Google Cloud Console.
+
+# \# 2. **Crear un Proyecto:** Crea un nuevo proyecto.
+
+# \# 3. **Habilitar la API:** Busca y habilita "Google Drive API".
+
+# \# 4. **Crear Credenciales:** Ve a "Credenciales" \> "Crear credenciales" \> "ID de cliente de OAuth".
+
+# \# 5. **Tipo de Aplicación:** Selecciona "Aplicación de escritorio" (Desktop App) y crea.
+
+# \# 6. **Descargar `credentials.json`:** Descarga el archivo JSON generado. **Renómbralo a `credentials.json`** y colócalo en el mismo directorio que este script.
+
+# \--- DEPENDENCIAS ---
+
+# \# Debes instalar las librerías necesarias:
+
+# \# pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+```python
+import os
+import io
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+# # Librerías de Google Drive
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+
+# --- CONFIGURACIÓN DE LA API ---
+
+# # Si se modifican estos alcances, el archivo token.json debe eliminarse.
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+# # Este alcance limita el acceso solo a los archivos creados o abiertos por esta aplicación.
+TOKEN_FILE = 'token.json'
+CREDENTIALS_FILE = 'credentials.json'
+
+def autenticar_google_drive():
+    """
+    Gestiona el proceso de autenticación OAUTH2.
+    Carga las credenciales guardadas o inicia el flujo de autenticación si es necesario.
+    
+    :return: Objeto Credentials o None si falla.
+    """
+    creds = None
+    # 1. Intentar cargar el token previamente guardado
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+
+    # 2. Si las credenciales son inválidas o no existen, iniciar el flujo
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            # # Si expiró, intentar refrescar el token
+            creds.refresh(Request())
+        else:
+            # # Iniciar el flujo de autenticación (abrirá una ventana del navegador)
+            if not os.path.exists(CREDENTIALS_FILE):
+                messagebox.showerror("Error de Autenticación", 
+                                     f"El archivo de credenciales '{CREDENTIALS_FILE}' no se encontró.\n"
+                                     "Consulta los pasos CRUCIALES al inicio del script.")
+                return None
+                
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+
+        # 3. Guardar las nuevas credenciales para futuras ejecuciones
+        with open(TOKEN_FILE, 'w') as token:
+            token.write(creds.to_json())
+            
+    return creds
+
+def subir_archivo_a_drive(ruta_archivo_local):
+    """
+    Sube el archivo especificado a la raíz de Google Drive.
+
+    :param ruta_archivo_local: Ruta completa al archivo en la máquina local.
+    """
+    # 1. Autenticación
+    creds = autenticar_google_drive()
+    if not creds:
+        print("# ❌ Subida cancelada por fallo en la autenticación.")
+        return
+
+    try:
+        # 2. Conectar al servicio de Drive
+        service = build('drive', 'v3', credentials=creds)
+        
+        nombre_archivo = os.path.basename(ruta_archivo_local)
+        
+        # 3. Definir los metadatos y el tipo MIME
+        file_metadata = {'name': nombre_archivo}
+        
+        # # `mimetypes.guess_type` podría usarse aquí, pero para simplificar, lo omitimos.
+        # # # MediaFileUpload adivinará el tipo MIME.
+        media = MediaFileUpload(ruta_archivo_local, resumable=True)
+
+        # 4. Realizar la subida
+        # # El parámetro 'body' son los metadatos y 'media_body' es el contenido del archivo.
+        file = service.files().create(body=file_metadata, media_body=media, fields='id, name').execute()
+
+        print(f"\n# ✅ Archivo subido con éxito.")
+        print(f"# Nombre: {file.get('name')}")
+        print(f"# ID de Drive: {file.get('id')}")
+        
+        messagebox.showinfo("Éxito de Subida", 
+                            f"Archivo '{file.get('name')}' subido a Google Drive (raíz) con éxito.")
+
+    except Exception as e:
+        print(f"\n# ❌ ERROR al subir el archivo: {e}")
+        messagebox.showerror("Error de Subida", f"Fallo al subir el archivo a Drive: {e}")
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar archivo) ---
+
+def main():
+    # # Inicializar Tkinter para los diálogos gráficos
+    root = tk.Tk()
+    root.withdraw() 
+    
+    print("# --- SUBIDA AUTOMÁTICA A GOOGLE DRIVE ---")
+    
+    # # Advertencia inicial sobre la autenticación
+    print(f"# 💡 Buscando '{CREDENTIALS_FILE}' y 'token.json'...")
+    
+    # # Abrir diálogo para seleccionar el archivo local
+    ruta_archivo = filedialog.askopenfilename(
+        title="Seleccione el archivo local a subir a Google Drive"
+    )
+    
+    if not ruta_archivo:
+        print("# Operación cancelada por el usuario. Saliendo.")
+        sys.exit(0)
+        
+    if not os.path.exists(ruta_archivo):
+        messagebox.showerror("Error", "El archivo seleccionado no existe.")
+        sys.exit(1)
+
+    subir_archivo_a_drive(ruta_archivo)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala las dependencias de Google:**
+    ```bash
+    pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+    ```
+2.  **Sigue los Pasos CRUCIALES:** Asegúrate de haber completado los 6 pasos previos para obtener el archivo **`credentials.json`** de Google Cloud Console y colocarlo junto a este script.
+3.  **Guarda y Ejecuta:** Guarda el código Python (`subida_drive.py`) y ejecútalo:
+    ```bash
+    python subida_drive.py
+    ```
+4.  **Autenticación (Solo la primera vez):** La primera vez que ejecutes el script, se abrirá una ventana del navegador pidiéndote que inicies sesión en tu cuenta de Google y que otorgues permisos a la aplicación para que acceda a Google Drive. **Acepta los permisos.**
+5.  **Selecciona el Archivo:** Una vez autenticado, se te pedirá que elijas el archivo local que deseas subir.
+6.  **Verifica:** El archivo aparecerá en la raíz de tu Google Drive.
+
+# Este script maneja la autenticación y la subida de un archivo individual a la carpeta raíz de tu Google Drive.
+
+
+
+

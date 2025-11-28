@@ -1,0 +1,165 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **os** para interactuar con el sistema de archivos
+
+# \# y **random** para generar contenido aleatorio y dimensiones.
+
+```python
+import os
+import random
+import string
+import sys
+from tkinter import Tk, filedialog, messagebox
+
+# --- CONFIGURACIÓN ---
+
+# # Caracteres posibles para los nombres de archivo
+CARACTERES_NOMBRE = string.ascii_letters + string.digits + '_'
+# # Extensiones de archivo comunes
+EXTENSIONES = ['.txt', '.log', '.csv', '.dat', '.tmp', '.bin', '.json', '.xml']
+
+def generar_nombre_aleatorio(longitud=10):
+    """
+    Genera un nombre de archivo aleatorio de una longitud específica.
+    """
+    return ''.join(random.choice(CARACTERES_NOMBRE) for _ in range(longitud))
+
+def crear_archivo_ficticio(ruta_completa, tamaño_bytes):
+    """
+    Crea un archivo de un tamaño específico llenándolo con datos aleatorios.
+    
+    :param ruta_completa: La ruta y nombre del archivo a crear.
+    :param tamaño_bytes: El tamaño deseado del archivo en bytes.
+    :return: True si se creó con éxito, False en caso contrario.
+    """
+    # 1. Crear contenido aleatorio
+    # # Generamos bloques aleatorios para llenar el archivo
+    bloque_aleatorio = os.urandom(1024) # Bloque de 1 KB
+
+    try:
+        # 2. Abrir el archivo en modo binario de escritura ('wb')
+        with open(ruta_completa, 'wb') as archivo:
+            bytes_escritos = 0
+            
+            # 3. Escribir hasta alcanzar el tamaño deseado
+            while bytes_escritos < tamaño_bytes:
+                # # Determinar cuántos bytes quedan por escribir
+                bytes_restantes = tamaño_bytes - bytes_escritos
+                
+                # # Elegir el tamaño del bloque a escribir (min entre el bloque y lo restante)
+                tamaño_a_escribir = min(len(bloque_aleatorio), bytes_restantes)
+                
+                # # Escribir el bloque o parte de él
+                archivo.write(bloque_aleatorio[:tamaño_a_escribir])
+                
+                # # Actualizar el contador
+                bytes_escritos += tamaño_a_escribir
+                
+        return True
+        
+    except Exception as e:
+        print(f"# ERROR al crear el archivo {ruta_completa}: {e}")
+        return False
+
+def generar_archivos_ficticios(directorio_destino, num_archivos, min_size_kb=1, max_size_kb=1000):
+    """
+    Coordina la generación de múltiples archivos ficticios.
+    
+    :param directorio_destino: La carpeta donde se crearán los archivos.
+    :param num_archivos: La cantidad de archivos a crear.
+    :param min_size_kb: Tamaño mínimo del archivo en KB.
+    :param max_size_kb: Tamaño máximo del archivo en KB.
+    :return: La cantidad de archivos creados con éxito.
+    """
+    archivos_creados = 0
+    
+    # 1. Validación de la ruta
+    if not os.path.isdir(directorio_destino):
+        print(f"# Error: El directorio '{directorio_destino}' no existe.")
+        return 0
+        
+    print(f"# Iniciando generación de {num_archivos} archivos en: {directorio_destino}")
+
+    # 2. Generación en bucle
+    for i in range(num_archivos):
+        # # Determinar la longitud del nombre
+        longitud_nombre = random.randint(8, 20)
+        
+        # # Generar el nombre y seleccionar una extensión al azar
+        nombre_base = generar_nombre_aleatorio(longitud_nombre)
+        extension = random.choice(EXTENSIONES)
+        nombre_completo = nombre_base + extension
+        ruta_completa = os.path.join(directorio_destino, nombre_completo)
+        
+        # # Generar el tamaño aleatorio (convertir KB a Bytes)
+        tamaño_bytes = random.randint(min_size_kb, max_size_kb) * 1024
+        
+        # # Crear el archivo
+        if crear_archivo_ficticio(ruta_completa, tamaño_bytes):
+            archivos_creados += 1
+            # # Muestra el progreso
+            print(f"# Creado {i+1}/{num_archivos}: {nombre_completo} ({tamaño_bytes/1024:.2f} KB)")
+        else:
+            print(f"# Falló la creación del archivo: {nombre_completo}")
+
+    return archivos_creados
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar carpeta) ---
+
+def main():
+    # # Usamos Tkinter solo para el diálogo de selección de carpeta
+    root = Tk()
+    root.withdraw() 
+
+    print("# --- GENERADOR DE ARCHIVOS FICTICIOS ---")
+    
+    # # Parámetros de la generación
+    NUM_ARCHIVOS = 50
+    TAMAÑO_MIN_KB = 10  # 10 KB
+    TAMAÑO_MAX_KB = 500 # 500 KB
+    
+    # # Abrir diálogo para seleccionar la carpeta de destino
+    directorio_destino = filedialog.askdirectory(title="Seleccione el directorio de destino para los archivos")
+    
+    if not directorio_destino:
+        print("# Operación cancelada por el usuario.")
+        return
+        
+    print(f"# Se crearán entre {TAMAÑO_MIN_KB} KB y {TAMAÑO_MAX_KB} KB por archivo.")
+
+    # # Ejecutar la generación
+    creados = generar_archivos_ficticios(
+        directorio_destino, 
+        NUM_ARCHIVOS, 
+        TAMAÑO_MIN_KB, 
+        TAMAÑO_MAX_KB
+    )
+    
+    print("\n# === RESULTADOS DE LA GENERACIÓN ===")
+    if creados > 0:
+        messagebox.showinfo("Éxito", f"Se crearon {creados} de {NUM_ARCHIVOS} archivos ficticios en:\n{directorio_destino}")
+        print(f"# Generación finalizada. Archivos creados: {creados}")
+    else:
+        messagebox.showwarning("Advertencia", "No se creó ningún archivo. Revisa los permisos o la ruta.")
+        print("# Generación fallida.")
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `generador_ficticio.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python generador_ficticio.py
+    ```
+3.  **Selecciona la Carpeta:** Se abrirá una ventana de diálogo pidiéndote que elijas la carpeta donde se guardarán los archivos ficticios.
+4.  **Revisa la Carpeta:** Una vez que el script finalice, la carpeta que seleccionaste estará llena de archivos con nombres aleatorios, extensiones comunes, y tamaños variados (entre 10 KB y 500 KB, según la configuración).
+
+# La aplicación utiliza `os.urandom()` para generar datos binarios aleatorios, lo que asegura que los archivos no sean idénticos entre sí.
+
+
+
+

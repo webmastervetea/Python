@@ -1,0 +1,132 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **pyautogui** esté instalada.
+
+# \# Puedes instalarla con `pip install pyautogui`.
+
+# \# ADVERTENCIA: Una vez que el script comienza a correr, perderás el control
+
+# \# \# del ratón. ¡Asegúrate de saber cómo detenerlo\!
+
+```python
+import pyautogui
+import time
+import sys
+from tkinter import Tk, messagebox
+
+# --- CONFIGURACIÓN DE SEGURIDAD ---
+
+# # Intervalo de seguridad: Mover el ratón a la esquina superior izquierda detiene el script.
+pyautogui.FAILSAFE = True
+# # Duración de la pausa entre cada comando de pyautogui (hace la automatización más visible)
+pyautogui.PAUSE = 0.5 
+
+def automatizar_tarea_ejemplo():
+    """
+    Ejecuta una secuencia de comandos automatizados de ratón y teclado.
+    
+    EJEMPLO: Abrir el Bloc de Notas (Windows) o Editor de Texto (Linux/Mac),
+             escribir un saludo y guardarlo.
+    """
+    
+    # 1. Esperar un momento para que el usuario mueva el foco a donde debe estar
+    print("# ⏳ Tienes 5 segundos para mover el ratón y la ventana a la posición inicial.")
+    time.sleep(5)
+    print("# 🚀 Iniciando la automatización...")
+    
+    try:
+        # --- PASO 1: Abrir la Aplicación (Ejemplo: Bloc de Notas) ---
+        
+        # # Presionar la tecla de Windows (Win) o Command (Mac) y luego 'r' para abrir "Ejecutar"
+        pyautogui.hotkey('win', 'r') 
+        # # Esperar un breve momento para que la ventana de Ejecutar aparezca
+        time.sleep(1) 
+        
+        # # Escribir el nombre del programa y presionar Enter
+        # # # Windows: 'notepad'
+        # # # Linux/Mac (si tienes un lanzador): Puedes usar el nombre de tu editor.
+        pyautogui.write('notepad', interval=0.1)
+        pyautogui.press('enter')
+        time.sleep(1)
+        
+        # --- PASO 2: Escribir el Contenido ---
+        
+        # # Escribir la cadena de texto con un intervalo de 0.05 segundos entre letras
+        texto = "Hola, esto es una prueba de automatización con PyAutoGUI."
+        pyautogui.write(texto, interval=0.05)
+        pyautogui.press('enter')
+        pyautogui.write(time.ctime(), interval=0.05) # Escribir la fecha y hora actuales
+        
+        # --- PASO 3: Guardar el Archivo ---
+        
+        # # Presionar Ctrl + S para abrir el diálogo de Guardar
+        pyautogui.hotkey('ctrl', 's')
+        time.sleep(1)
+        
+        # # Escribir el nombre del archivo (Asegúrate de que la ruta sea accesible)
+        # # # Nota: El diálogo de guardar puede variar. Esto asume que el foco está en el campo de nombre.
+        pyautogui.write('Reporte_Automatico.txt', interval=0.05)
+        pyautogui.press('enter')
+        time.sleep(1)
+        
+        # # (Opcional) Presionar Alt + F4 para cerrar el Bloc de Notas
+        pyautogui.hotkey('alt', 'f4')
+        
+        print("# ✅ Tarea de automatización completada con éxito.")
+
+    except pyautogui.FailSafeException:
+        print("\n# 🛑 ¡FUNCIÓN DE FAIL-SAFE ACTIVADA! El script se detuvo (moviste el ratón a la esquina).")
+    except Exception as e:
+        print(f"\n# ❌ ERROR durante la automatización: {e}")
+        messagebox.showerror("Error de Automatización", f"El script falló. Asegúrate de que las aplicaciones estén instaladas y las rutas sean correctas. Error: {e}")
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    try:
+        # # Inicializar Tkinter solo para mostrar el diálogo de advertencia
+        root = Tk()
+        root.withdraw() 
+        
+        messagebox.showwarning(
+            "ADVERTENCIA DE SEGURIDAD",
+            "Estás a punto de iniciar un script que controlará tu ratón y teclado.\n\n"
+            "PARA DETENERLO INMEDIATAMENTE: Mueve el cursor del ratón a la esquina superior izquierda de la pantalla."
+        )
+        
+        automatizar_tarea_ejemplo()
+
+    except Exception as e:
+        print(f"Error fatal: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones y Advertencias Cruciales
+
+1.  **Instala `pyautogui`:** Abre tu terminal y ejecuta:
+
+    ```bash
+    pip install pyautogui
+    ```
+
+2.  **Advertencia de Seguridad:**
+
+      * **FAIL-SAFE:** Por defecto, si mueves el ratón a la esquina superior izquierda de tu pantalla (coordenadas 0, 0) el script se detendrá inmediatamente. **Conoce esta función.**
+      * **Plataforma:** Los comandos (`notepad`, `win+r`, `alt+f4`) son específicos de Windows. Si usas **Linux** o **macOS**, deberás ajustar los comandos del teclado dentro de la función `automatizar_tarea_ejemplo()` para que coincidan con tu sistema (por ejemplo, usar `pyautogui.hotkey('command', 'space')` para abrir Spotlight en Mac).
+
+3.  **Guarda y Ejecuta:** Guarda el código en un archivo (`automatizador.py`) y ejecútalo:
+
+    ```bash
+    python automatizador.py
+    ```
+
+4.  **Prepárate:** Cuando aparezca el mensaje de espera, mueve tu ratón a la posición que desees que sea el punto de partida (por ejemplo, la esquina de tu escritorio) y prepárate para actuar en caso de emergencia moviendo el ratón a la esquina superior izquierda.
+
+# Este ejemplo demuestra la apertura de una aplicación, la escritura de texto y el guardado de un archivo.
+
+
+

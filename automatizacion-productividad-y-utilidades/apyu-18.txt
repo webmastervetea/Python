@@ -1,0 +1,176 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **Pillow** esté instalada.
+
+# \# Puedes instalarla con: `pip install Pillow`
+
+```python
+import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox, simpledialog
+from PIL import Image
+
+# --- CONFIGURACIÓN ---
+
+# # Extensiones de archivo que el script intentará procesar
+EXTENSIONES_VALIDAS = ('.jpg', '.jpeg', '.png', '.tiff', '.bmp')
+
+def recortar_imagen(ruta_entrada, ruta_salida, ancho_recorte, alto_recorte):
+    """
+    Carga una imagen, calcula el área central para el recorte y guarda el resultado.
+
+    El método de recorte es 'recorte central':
+    Se mantiene el centro de la imagen y se recorta lo necesario de los bordes.
+
+    :param ruta_entrada: Ruta del archivo de imagen original.
+    :param ruta_salida: Ruta para guardar el archivo recortado.
+    :param ancho_recorte: Ancho objetivo en píxeles.
+    :param alto_recorte: Alto objetivo en píxeles.
+    :return: True si el recorte fue exitoso, False en caso contrario.
+    """
+    try:
+        # 1. Abrir la imagen
+        with Image.open(ruta_entrada) as img:
+            ancho_original, alto_original = img.size
+
+            # 2. Validación de tamaño
+            if ancho_original < ancho_recorte or alto_original < alto_recorte:
+                print(f"# ⚠️ Omitido: La imagen es más pequeña que el tamaño de recorte ({ancho_original}x{alto_original}).")
+                return False
+
+            # 3. Calcular las coordenadas del recorte central (left, top, right, bottom)
+            # # El recorte se centra para que la parte más relevante quede en el medio.
+            left = (ancho_original - ancho_recorte) // 2
+            top = (alto_original - alto_recorte) // 2
+            right = (ancho_original + ancho_recorte) // 2
+            bottom = (alto_original + alto_recorte) // 2
+
+            # 4. Realizar el recorte
+            img_recortada = img.crop((left, top, right, bottom))
+
+            # 5. Guardar la imagen recortada
+            # # Usamos 'optimize=True' para la calidad de JPEG
+            img_recortada.save(ruta_salida, optimize=True)
+            return True
+
+    except Exception as e:
+        print(f"# ❌ Error al procesar {os.path.basename(ruta_entrada)}: {e}")
+        return False
+
+def procesar_recorte_por_lotes(directorio_origen, directorio_destino, ancho, alto):
+    """
+    Recorre el directorio de origen y recorta todas las imágenes válidas.
+    """
+    if not os.path.isdir(directorio_origen):
+        messagebox.showerror("Error", "El directorio de origen no existe.")
+        return 0
+
+    if not os.path.isdir(directorio_destino):
+        # # Crear el directorio de destino si no existe
+        os.makedirs(directorio_destino, exist_ok=True)
+        
+    archivos_procesados = 0
+    archivos_fallidos = 0
+    
+    print(f"\n# ✂️ Iniciando recorte por lotes a {ancho}x{alto} píxeles...")
+    print(f"# Directorio de Destino: {directorio_destino}")
+
+    # 1. Recorrer los archivos en el directorio de origen
+    for nombre_archivo in os.listdir(directorio_origen):
+        if nombre_archivo.lower().endswith(EXTENSIONES_VALIDAS):
+            ruta_entrada = os.path.join(directorio_origen, nombre_archivo)
+            
+            # 2. Definir la ruta de salida (añadiendo el prefijo '_recortado')
+            nombre_base, extension = os.path.splitext(nombre_archivo)
+            nombre_salida = f"{nombre_base}_recortado{extension}"
+            ruta_salida = os.path.join(directorio_destino, nombre_salida)
+
+            # 3. Ejecutar el recorte
+            if recortar_imagen(ruta_entrada, ruta_salida, ancho, alto):
+                archivos_procesados += 1
+                print(f"# ✅ Procesado: {nombre_archivo}")
+            else:
+                archivos_fallidos += 1
+
+    print(f"\n# --- RESUMEN DEL PROCESAMIENTO ---")
+    print(f"## Archivos procesados con éxito: {archivos_procesados}")
+    print(f"## Archivos fallidos/omitidos: {archivos_fallidos}")
+    print("# Procesamiento finalizado.")
+    
+    return archivos_procesados
+
+# --- Bloque Principal de Ejecución (con GUI para selección) ---
+
+def main():
+    # # Inicializar Tkinter para los diálogos gráficos
+    root = tk.Tk()
+    root.withdraw() 
+    
+    print("# --- HERRAMIENTA DE RECORTE DE IMAGEN POR LOTES ---")
+    
+    # 1. Seleccionar directorio de origen
+    directorio_origen = filedialog.askdirectory(title="1. Seleccione la carpeta con las imágenes originales")
+    if not directorio_origen:
+        print("# Operación cancelada por el usuario.")
+        return
+
+    # 2. Seleccionar directorio de destino (opcionalmente crear uno)
+    directorio_destino = filedialog.askdirectory(title="2. Seleccione o cree la carpeta para las imágenes recortadas")
+    if not directorio_destino:
+        print("# Operación cancelada por el usuario.")
+        return
+        
+    # 3. Pedir el tamaño objetivo al usuario
+    try:
+        ancho = simpledialog.askinteger("Tamaño de Recorte", "Introduce el ancho de recorte deseado (píxeles):", minvalue=1)
+        if ancho is None: return
+        
+        alto = simpledialog.askinteger("Tamaño de Recorte", "Introduce el alto de recorte deseado (píxeles):", minvalue=1)
+        if alto is None: return
+
+    except Exception:
+        messagebox.showerror("Error", "El tamaño debe ser un número entero válido.")
+        return
+        
+    # 4. Iniciar el procesamiento
+    procesados = procesar_recorte_por_lotes(directorio_origen, directorio_destino, ancho, alto)
+    
+    if procesados > 0:
+        messagebox.showinfo("Completado", f"Recorte por lotes finalizado. {procesados} archivos guardados en:\n{directorio_destino}")
+        
+
+if __name__ == "__main__":
+    # # Verificar dependencias
+    try:
+        from PIL import Image
+    except ImportError:
+        messagebox.showerror("Error Crítico", 
+                             "La librería Pillow (PIL) es requerida. Por favor, instálala con: pip install Pillow")
+        sys.exit(1)
+        
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `Pillow`:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install Pillow
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `recortador_lotes.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python recortador_lotes.py
+    ```
+4.  **Selecciona las Carpetas:** El programa te guiará paso a paso:
+      * Elige la **Carpeta de Origen** (donde están las imágenes originales).
+      * Elige la **Carpeta de Destino** (donde se guardarán las imágenes recortadas).
+5.  **Introduce el Tamaño:** Se abrirán dos ventanas pidiéndote el **ancho** y el **alto** deseados en píxeles.
+6.  **Verifica:** Las imágenes recortadas se guardarán en la carpeta de destino, con el centro de la imagen original manteniendo el foco.
+
+# El script utiliza un método de **"recorte central"** para mantener la parte más importante de la imagen cuando el recorte no coincide con la proporción original.
+
+
+
+

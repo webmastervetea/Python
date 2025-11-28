@@ -1,0 +1,151 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo estándar **`os`** para la navegación de archivos,
+
+# \# y **`tkinter`** para permitir al usuario seleccionar la carpeta a escanear.
+
+```python
+import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from collections import defaultdict
+import re
+
+# --- CONFIGURACIÓN ---
+
+# # Definición de la lista de palabras clave (se buscarán sin distinción de mayúsculas/minúsculas)
+PALABRAS_CLAVE = [
+    "urgente",
+    "confidencial",
+    "contrato",
+    "factura",
+    "fraude",
+    "phishing",
+    "contraseña",
+    "alerta",
+    "vencimiento",
+    "pago"
+]
+
+# # Extensiones de archivo que el script intentará leer
+EXTENSIONES_VALIDAS = ('.txt', '.log', '.csv')
+
+def escanear_archivos_en_directorio(directorio_raiz):
+    """
+    Recorre el directorio y sus subdirectorios, leyendo archivos
+    y buscando las palabras clave.
+
+    :param directorio_raiz: La ruta de la carpeta a escanear.
+    :return: Un diccionario con los resultados.
+    """
+    # # defaultdict(list) almacena los resultados: {archivo: [palabra_clave_1, palabra_clave_2, ...]}
+    resultados_por_archivo = defaultdict(list)
+    archivos_escaneados = 0
+    
+    # 1. Preparar las palabras clave para la búsqueda (compilación de regex)
+    # # Usar una expresión regular para buscar todas las palabras clave eficientemente
+    # # # `re.IGNORECASE` asegura que no distinga entre mayúsculas y minúsculas
+    # # # `|` actúa como un OR lógico
+    patron_regex = re.compile(r'\b(' + '|'.join(re.escape(p) for p in PALABRAS_CLAVE) + r')\b', re.IGNORECASE)
+
+    print(f"# 🔍 Iniciando escaneo en: {directorio_raiz}")
+    print(f"# Palabras Clave a buscar: {', '.join(PALABRAS_CLAVE)}")
+
+    # 2. Recorrer el directorio y subdirectorios
+    for dirpath, dirnames, filenames in os.walk(directorio_raiz):
+        for nombre_archivo in filenames:
+            # # Verificar la extensión del archivo
+            if nombre_archivo.lower().endswith(EXTENSIONES_VALIDAS):
+                ruta_completa = os.path.join(dirpath, nombre_archivo)
+                archivos_escaneados += 1
+                
+                try:
+                    # 3. Leer el contenido del archivo
+                    with open(ruta_completa, 'r', encoding='utf-8', errors='ignore') as f:
+                        contenido = f.read()
+                        
+                        # 4. Buscar coincidencias usando la expresión regular
+                        coincidencias = patron_regex.findall(contenido)
+                        
+                        # 5. Registrar las coincidencias encontradas
+                        if coincidencias:
+                            # # Registrar solo las palabras únicas encontradas en este archivo
+                            palabras_encontradas = sorted(list(set(c.lower() for c in coincidencias)))
+                            resultados_por_archivo[ruta_completa] = palabras_encontradas
+                            print(f"# ❗ ENCONTRADO en: {ruta_completa}")
+                            
+                except Exception as e:
+                    # # Capturar errores de permisos o codificación
+                    print(f"# ❌ Error al leer {nombre_archivo}: {e}")
+                    pass
+
+    return resultados_por_archivo, archivos_escaneados
+
+
+def mostrar_resultados(resultados, archivos_totales):
+    """
+    Muestra un resumen de los resultados del escaneo en la consola.
+    """
+    num_coincidentes = len(resultados)
+    
+    print("\n# === RESUMEN DEL DETECTOR DE PALABRAS CLAVE ===")
+    print(f"## 📊 Archivos escaneados: {archivos_totales}")
+    print(f"## 🎯 Archivos con coincidencias: {num_coincidentes}")
+    
+    if num_coincidentes == 0:
+        print("# ¡Éxito! No se encontraron palabras clave en los archivos escaneados.")
+        return
+
+    print("\n## 📝 DETALLE DE COINCIDENCIAS:")
+    for ruta, palabras in resultados.items():
+        print(f"### Archivo: {ruta}")
+        print(f"# -> Palabras Clave Encontradas: {', '.join(palabra.upper() for palabra in palabras)}")
+        print("# ----------------------------------")
+        
+    print("\n# === FIN DEL ANÁLISIS ===")
+
+
+# --- Bloque Principal de Ejecución (con GUI para seleccionar carpeta) ---
+
+def main():
+    # # Usamos Tkinter para la selección de carpeta
+    root = tk.Tk()
+    root.withdraw() 
+    
+    print("# --- DETECTOR DE PALABRAS CLAVE ---")
+    
+    # # Abrir diálogo para seleccionar la carpeta a escanear
+    directorio_a_escanear = filedialog.askdirectory(title="Seleccione el directorio con documentos/correos a escanear")
+    
+    if not directorio_a_escanear:
+        print("# Operación cancelada por el usuario. Saliendo.")
+        sys.exit(0)
+        
+    # # Ejecutar el escaneo
+    resultados, archivos_totales = escanear_archivos_en_directorio(directorio_a_escanear)
+    
+    # # Mostrar los resultados
+    mostrar_resultados(resultados, archivos_totales)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `detector_palabras.py`.
+2.  **Ajusta las Palabras Clave:** Edita la lista `PALABRAS_CLAVE` en la sección de CONFIGURACIÓN con los términos que desees buscar.
+3.  **Crea Archivos de Prueba:** Crea algunos archivos `.txt` o `.log` en una carpeta de prueba que contengan algunas de esas palabras clave (y otros que no).
+4.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python detector_palabras.py
+    ```
+5.  **Selecciona la Carpeta:** Se abrirá una ventana de diálogo pidiéndote que elijas la carpeta a escanear.
+6.  **Revisa los Resultados:** El script imprimirá en la consola los archivos que contienen coincidencias y las palabras clave exactas que se encontraron en cada uno.
+
+# La aplicación utiliza una **expresión regular** compilada (`re.compile`) para buscar todas las palabras clave en un solo pase, lo que la hace muy rápida y eficiente en archivos grandes, además de ser **insensible a mayúsculas/minúsculas**.
+
+
+
+

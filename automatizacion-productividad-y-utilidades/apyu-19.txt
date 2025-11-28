@@ -1,0 +1,102 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza el módulo **calendar** para generar el formato del calendario
+
+# \# y **tkinter** para crear una sencilla interfaz gráfica que solicita el mes y el año.
+
+```python
+import calendar
+import os
+import sys
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+
+# --- FUNCIÓN PRINCIPAL DE GENERACIÓN ---
+
+def generar_calendario_mensual(mes, anio):
+    """
+    Genera y devuelve el calendario de texto para el mes y año dados.
+
+    :param mes: Número del mes (1-12).
+    :param anio: Número del año (Ej: 2025).
+    :return: Una cadena de texto con el calendario.
+    """
+    try:
+        # # Crear una instancia de TextCalendar
+        cal = calendar.TextCalendar(calendar.MONDAY) # Iniciar la semana en Lunes (Opción: calendar.SUNDAY)
+        
+        # # Formatear el mes. El resultado es una cadena de texto lista para imprimir.
+        calendario_texto = cal.formatmonth(anio, mes, w=2, l=1)
+        
+        return calendario_texto
+        
+    except ValueError:
+        return "❌ ERROR: Mes o año fuera de rango. Asegúrate de que el mes esté entre 1 y 12."
+    except Exception as e:
+        return f"❌ ERROR inesperado: {e}"
+
+def solicitar_datos_y_mostrar_calendario():
+    """
+    Pide al usuario el mes y el año y muestra el calendario.
+    """
+    
+    # 1. Pedir el año
+    try:
+        anio_entrada = simpledialog.askinteger("Generador de Calendario", "Introduce el año (Ej: 2025):", minvalue=1900, maxvalue=2100)
+        if anio_entrada is None: 
+            print("# Operación cancelada por el usuario.")
+            return
+
+        # 2. Pedir el mes
+        mes_entrada = simpledialog.askinteger("Generador de Calendario", "Introduce el número del mes (1-12):", minvalue=1, maxvalue=12)
+        if mes_entrada is None: 
+            print("# Operación cancelada por el usuario.")
+            return
+
+    except Exception:
+        messagebox.showerror("Error de Entrada", "Asegúrate de introducir números enteros válidos.")
+        return
+        
+    # 3. Generar el calendario
+    calendario = generar_calendario_mensual(mes_entrada, anio_entrada)
+    
+    # 4. Mostrar el resultado en la consola
+    print(f"\n# --- CALENDARIO DE {calendar.month_name[mes_entrada].upper()} de {anio_entrada} ---")
+    print(calendario)
+    print("----------------------------------------------------------")
+    
+    # 5. Opcionalmente, mostrar el resultado también en un cuadro de diálogo
+    messagebox.showinfo(f"Calendario de {calendar.month_name[mes_entrada]}", calendario)
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    # # Inicializar Tkinter para los diálogos gráficos
+    root = tk.Tk()
+    root.withdraw() 
+    
+    print("# --- GENERADOR DE CALENDARIO MENSUAL ---")
+    
+    solicitar_datos_y_mostrar_calendario()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `generador_calendario.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python generador_calendario.py
+    ```
+3.  **Introduce los Datos:** El programa abrirá dos cuadros de diálogo pidiéndote el **año** y luego el **número del mes** (del 1 al 12).
+4.  **Revisa los Resultados:**
+      * El calendario formateado se imprimirá en la **consola**.
+      * También aparecerá en un **cuadro de mensaje** emergente.
+
+# El script utiliza la clase `calendar.TextCalendar` para asegurar que el formato de salida sea limpio y bien alineado en la consola, comenzando la semana por Lunes (`calendar.MONDAY`).
+
+
+
