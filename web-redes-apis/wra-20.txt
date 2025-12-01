@@ -1,0 +1,151 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Excelente\! Aquí tienes una aplicación en Python para un **Simulador de Solicitudes HTTP**, utilizando la librería `requests`, que permite enviar peticiones **GET** y **POST** con encabezados y datos personalizados.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install requests`
+
+# 2\. **Ejecutar el script:** Guarda el código como un archivo `.py` y ejecútalo.
+
+```python
+import requests
+import json
+from urllib.parse import urlparse
+
+# # --- Configuración Global ---
+# # Timeout predeterminado para las solicitudes (en segundos)
+TIMEOUT_SEGUNDOS = 10
+# --------------------
+
+# # Función para obtener encabezados personalizados del usuario
+def obtener_encabezados():
+    encabezados = {}
+    print("\n# --- Encabezados Personalizados (Opcional) ---")
+    print("# Ingresa pares Clave: Valor, o deja la clave vacía para terminar.")
+    while True:
+        clave = input("# Clave del Encabezado: ").strip()
+        if not clave:
+            break
+        valor = input(f"# Valor para '{clave}': ").strip()
+        encabezados[clave] = valor
+    return encabezados
+
+# # Función para obtener datos (payload) para la solicitud POST
+def obtener_datos_post():
+    print("\n# --- Datos para Solicitud POST (Opcional) ---")
+    print("# Ingresa los datos como un objeto JSON válido (ej. {'nombre': 'valor'}).")
+    print("# Deja la línea vacía para enviar un cuerpo vacío.")
+    
+    datos_input = input("# Datos JSON: ").strip()
+    
+    if not datos_input:
+        return {}
+        
+    try:
+        # # Intentar analizar la entrada como JSON
+        datos_json = json.loads(datos_input)
+        return datos_json
+    except json.JSONDecodeError:
+        print("# ¡Advertencia! El formato JSON es inválido. Se enviarán los datos como texto plano si es posible.")
+        # # Devolver el string sin procesar
+        return datos_input 
+
+# # Función principal para enviar la solicitud HTTP
+def enviar_solicitud(metodo, url, encabezados, datos=None):
+    
+    print(f"\n# Enviando solicitud **{metodo.upper()}** a: {url}")
+    
+    try:
+        # # Seleccionar el método de la librería requests
+        if metodo.upper() == 'GET':
+            response = requests.get(url, headers=encabezados, timeout=TIMEOUT_SEGUNDOS)
+        elif metodo.upper() == 'POST':
+            # # Para POST, intentamos enviar los datos como JSON si son un diccionario
+            if isinstance(datos, dict):
+                response = requests.post(url, headers=encabezados, json=datos, timeout=TIMEOUT_SEGUNDOS)
+            else:
+                # # Si los datos son texto plano (string), se envían en el cuerpo
+                response = requests.post(url, headers=encabezados, data=datos, timeout=TIMEOUT_SEGUNDOS)
+        else:
+            print(f"\n# ¡Error! Método HTTP '{metodo.upper()}' no soportado por este simulador.")
+            return
+
+        # # --- Mostrar Resultados ---
+        print("\n# ==============================================================")
+        print(f"# Resultado de la Solicitud {metodo.upper()}")
+        print("# ==============================================================")
+        
+        print(f"# Código de Estado (Status Code): **{response.status_code}**")
+        print(f"# URL Final: {response.url}")
+        
+        # # Mostrar algunos encabezados de respuesta clave
+        print("\n# --- Encabezados de Respuesta ---")
+        print(f"# Content-Type: {response.headers.get('Content-Type')}")
+        print(f"# Server: {response.headers.get('Server')}")
+        
+        # # Mostrar el cuerpo de la respuesta (los primeros 500 caracteres)
+        print("\n# --- Cuerpo de la Respuesta (Primeros 500 caracteres) ---")
+        if response.text:
+            cuerpo = response.text[:500] + ('...' if len(response.text) > 500 else '')
+            print(cuerpo)
+        else:
+            print("# [Respuesta vacía]")
+        
+        print("\n# --------------------------------------------------------------")
+        
+    except requests.exceptions.Timeout:
+        print(f"\n# ¡Error de Timeout! La solicitud tardó más de {TIMEOUT_SEGUNDOS} segundos.")
+    except requests.exceptions.RequestException as e:
+        print(f"\n# Ocurrió un error de conexión o solicitud: {e}")
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Simulador de Solicitudes HTTP.")
+    print("# Permite enviar peticiones GET y POST personalizadas.")
+    
+    while True:
+        try:
+            # # 1. Método HTTP
+            metodo_input = input("\n# Ingresa el método HTTP (GET/POST o 'salir'): ").strip().upper()
+            
+            if metodo_input == 'SALIR':
+                print("# ¡Adiós! Gracias por usar el Simulador HTTP.")
+                break
+                
+            if metodo_input not in ['GET', 'POST']:
+                print("# Método inválido. Por favor, ingresa 'GET' o 'POST'.")
+                continue
+                
+            # # 2. URL
+            url_input = input("# Ingresa la URL de destino (ej. https://jsonplaceholder.typicode.com/posts): ").strip()
+            
+            if not url_input.startswith(('http://', 'https://')):
+                print("# URL inválida. Debe comenzar con http:// o https://.")
+                continue
+
+            # # 3. Encabezados
+            encabezados_personalizados = obtener_encabezados()
+            
+            # # 4. Datos (solo para POST)
+            datos_post = None
+            if metodo_input == 'POST':
+                datos_post = obtener_datos_post()
+            
+            # # Enviar la solicitud
+            enviar_solicitud(metodo_input, url_input, encabezados_personalizados, datos_post)
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Simulador HTTP.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Simulador HTTP.")
+            break
+```
+
+

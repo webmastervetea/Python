@@ -1,0 +1,136 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Claro\! Aquí tienes la aplicación en Python para un **Convertidor de Monedas en Tiempo Real**.
+
+# Utilizaremos la API gratuita de **ExchangeRate-API** porque no requiere clave de API para la tasa base USD (dólar estadounidense) y es fácil de usar.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Usaremos la librería `requests` para las peticiones HTTP.
+
+# `pip install requests`
+
+# 2\. **Códigos de Moneda:** Este script asume que usas códigos de moneda **ISO 4217** de 3 letras (ej. EUR, USD, JPY, CLP, MXN, ARS).
+
+```python
+import requests
+
+# # --- Configuración ---
+# # Usaremos el endpoint gratuito con USD como base (Dólar estadounidense)
+BASE_API_URL = "https://v6.exchangerate-api.com/v6/latest/USD"
+# --------------------
+
+# # Función para obtener las tasas de conversión
+def obtener_tasas_conversion():
+    try:
+        # # Realizar la solicitud a la API
+        response = requests.get(BASE_API_URL)
+        response.raise_for_status() # # Lanza una excepción si el código de estado es un error (4xx o 5xx)
+        
+        datos = response.json()
+        
+        # # Verificar si la API devolvió un código de éxito
+        if datos.get('result') == 'success':
+            return datos['conversion_rates']
+        else:
+            print(f"# Error en la respuesta de la API: {datos.get('error-type', 'Error desconocido')}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"# Ocurrió un error al conectar con la API: {e}")
+        return None
+    except Exception as e:
+        print(f"# Ocurrió un error inesperado al obtener las tasas: {e}")
+        return None
+
+# # Función principal para realizar la conversión
+def convertir_moneda(cantidad, moneda_origen, moneda_destino, tasas):
+    
+    # # Estandarizar las entradas a mayúsculas
+    origen = moneda_origen.upper()
+    destino = moneda_destino.upper()
+    
+    # # Verificar que las monedas existan en las tasas
+    if origen not in tasas or destino not in tasas:
+        print(f"# Error: Uno o ambos códigos de moneda ('{origen}' o '{destino}') son inválidos o no están disponibles.")
+        return None
+        
+    try:
+        # # 1. Convertir la cantidad de origen a la moneda base (USD)
+        # # La tasa es Moneda / USD, por lo tanto, dividimos para obtener USD
+        tasa_origen_a_usd = 1 / tasas[origen]
+        cantidad_en_usd = cantidad * tasa_origen_a_usd
+        
+        # # 2. Convertir la cantidad en USD a la moneda destino
+        # # La tasa es Destino / USD, por lo tanto, multiplicamos por la tasa de destino
+        tasa_usd_a_destino = tasas[destino]
+        cantidad_final = cantidad_en_usd * tasa_usd_a_destino
+        
+        return cantidad_final
+        
+    except Exception as e:
+        print(f"# Error al realizar el cálculo de conversión: {e}")
+        return None
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# ==============================================================")
+    print("# **Convertidor de Monedas en Tiempo Real**")
+    print("# Utiliza las tasas de ExchangeRate-API.")
+    print("# Ejemplos de códigos: USD, EUR, JPY, CLP, MXN.")
+    print("# ==============================================================")
+    
+    # # Obtener las tasas de conversión solo una vez al inicio
+    tasas_globales = obtener_tasas_conversion()
+    
+    if not tasas_globales:
+        print("# No se pudo inicializar la aplicación debido a un fallo en la API.")
+    else:
+        while True:
+            try:
+                # # 1. Entrada de la cantidad
+                cantidad_input = input("\n# Ingresa la CANTIDAD a convertir (o 'salir'): ").strip()
+                
+                if cantidad_input.lower() == 'salir':
+                    print("# ¡Adiós! Gracias por usar el Convertidor de Monedas.")
+                    break
+                    
+                try:
+                    cantidad = float(cantidad_input)
+                    if cantidad <= 0:
+                        print("# Por favor, ingresa una cantidad positiva.")
+                        continue
+                except ValueError:
+                    print("# Entrada inválida. Por favor, ingresa un número para la cantidad.")
+                    continue
+                
+                # # 2. Entrada de la moneda de origen
+                moneda_origen = input("# Ingresa el código de la moneda de ORIGEN (ej. EUR): ").strip().upper()
+                
+                # # 3. Entrada de la moneda de destino
+                moneda_destino = input("# Ingresa el código de la moneda de DESTINO (ej. MXN): ").strip().upper()
+                
+                if not moneda_origen or not moneda_destino:
+                    print("# Por favor, ingresa códigos de moneda válidos.")
+                    continue
+                    
+                # # Realizar la conversión
+                resultado = convertir_moneda(cantidad, moneda_origen, moneda_destino, tasas_globales)
+                
+                if resultado is not None:
+                    # # Mostrar el resultado con formato
+                    print("\n# --------------------------------------------------------------")
+                    print(f"# Resultado de la Conversión:")
+                    print(f"# {cantidad:,.2f} {moneda_origen} equivale a **{resultado:,.2f} {moneda_destino}**")
+                    print("# --------------------------------------------------------------")
+
+            except EOFError:
+                print("\n# ¡Adiós! Gracias por usar el Convertidor de Monedas.")
+                break
+            except KeyboardInterrupt:
+                print("\n# ¡Adiós! Gracias por usar el Convertidor de Monedas.")
+                break
+```
+
+

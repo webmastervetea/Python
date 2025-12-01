@@ -1,0 +1,121 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Absolutamente\! Aquí tienes una aplicación en Python para un **Rastreador de Noticias por Tema**.
+
+# Este script utiliza la API de **News API** para buscar titulares sobre un tema específico en tiempo real.
+
+# **Instrucciones Previas:**
+
+# 1\. **Obtén tu Clave API:** Necesitas registrarte en [News API](https://newsapi.org/) para obtener una clave de API. ¡Es gratis para desarrolladores\!
+
+# 2\. **Instalar la librería:** Usaremos la librería `requests` para las peticiones HTTP.
+
+# `pip install requests`
+
+# 3\. **Reemplaza la Clave:** Asegúrate de reemplazar `TU_CLAVE_API_AQUI` en el código con tu clave real.
+
+```python
+import requests
+import datetime
+
+# # --- Configuración ---
+# # Reemplaza esta línea con tu clave de API de News API
+API_KEY = "TU_CLAVE_API_AQUI"
+BASE_URL = "https://newsapi.org/v2/everything"
+# # Número máximo de artículos a mostrar
+MAX_ARTICULOS = 5 
+# --------------------
+
+# # Función principal para buscar noticias
+def buscar_noticias(tema):
+    
+    # # Parámetros para la solicitud a la API
+    params = {
+        'q': tema,              # # Tema de la búsqueda
+        'apiKey': API_KEY,      # # Tu clave de API
+        'language': 'es',       # # Buscar noticias en español
+        'sortBy': 'publishedAt',# # Ordenar por fecha de publicación (las más recientes primero)
+        'pageSize': MAX_ARTICULOS # # Limitar el número de resultados
+    }
+
+    print(f"\n# Buscando titulares sobre: **{tema.capitalize()}**...")
+
+    try:
+        # # Realizar la solicitud GET a la API
+        response = requests.get(BASE_URL, params=params)
+        response.raise_for_status() # # Lanza una excepción si hay un error en el código de estado
+        
+        datos = response.json()
+        
+        # # Verificar si se encontraron artículos
+        total_articulos = datos.get('totalResults', 0)
+        articulos = datos.get('articles', [])
+        
+        print("\n# ==============================================================")
+        print(f"# Resultados encontrados: {total_articulos} (Mostrando los primeros {len(articulos)})")
+        print("# ==============================================================")
+        
+        if not articulos:
+            print(f"# Lo siento, no se encontraron noticias recientes sobre '{tema}'.")
+            
+        else:
+            for i, articulo in enumerate(articulos, 1):
+                titulo = articulo.get('title', 'Sin título')
+                fuente = articulo.get('source', {}).get('name', 'Fuente desconocida')
+                url = articulo.get('url', '#')
+                
+                # # Limpiar el título, ya que a veces incluye el nombre de la fuente al final
+                if ' - ' in titulo:
+                    titulo_limpio = ' - '.join(titulo.split(' - ')[:-1])
+                else:
+                    titulo_limpio = titulo
+                
+                print(f"\n# --- Artículo {i} ---")
+                print(f"# Título: **{titulo_limpio}**")
+                print(f"# Fuente: {fuente}")
+                print(f"# Enlace: {url}")
+            
+            print("\n# --------------------------------------------------------------")
+        
+    except requests.exceptions.HTTPError as errh:
+        print(f"\n# ¡Error HTTP! Asegúrate de que tu clave API es correcta.")
+        print(f"# {errh}")
+    except requests.exceptions.ConnectionError as errc:
+        print(f"\n# ¡Error de Conexión!: {errc}")
+    except requests.exceptions.Timeout as errt:
+        print(f"\n# ¡Tiempo de espera agotado!: {errt}")
+    except requests.exceptions.RequestException as err:
+        print(f"\n# Ocurrió un error inesperado al hacer la solicitud: {err}")
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    if API_KEY == "TU_CLAVE_API_AQUI":
+        print("# --- ADVERTENCIA ---")
+        print("# **Debes reemplazar 'TU_CLAVE_API_AQUI' con tu clave real de News API** para que el script funcione.")
+        print("# -------------------")
+    
+    while True:
+        try:
+            tema_busqueda = input("\n# Ingresa el tema de noticias a buscar (ej. fútbol, economía, IA) o 'salir': ").strip()
+            
+            if tema_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Rastreador de Noticias.")
+                break
+            
+            if tema_busqueda:
+                buscar_noticias(tema_busqueda)
+            else:
+                print("# Por favor, ingresa un tema de búsqueda válido.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Rastreador de Noticias.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Rastreador de Noticias.")
+            break
+```
+
+

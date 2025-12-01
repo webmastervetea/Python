@@ -1,0 +1,97 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Esta API no requiere clave, lo que facilita su uso inmediato.
+
+```python
+import requests
+import json
+
+# # --- Configuración ---
+BASE_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/" # # El endpoint base para la búsqueda en inglés
+# --------------------
+
+# # Función principal para buscar la definición de una palabra
+def buscar_definicion(palabra):
+    
+# # Construir la URL completa para la búsqueda
+    url = f"{BASE_URL}{palabra}"
+    
+# # Realizar la solicitud GET a la API del diccionario
+    try:
+        response = requests.get(url)
+        
+# # Verificar si la solicitud fue exitosa (código de estado 200)
+        if response.status_code == 200:
+# # Analizar la respuesta JSON
+            datos = response.json()
+            
+            print("\n# ==============================================================")
+            print(f"# Definición(es) de: **{palabra.capitalize()}**")
+            print("# ==============================================================")
+            
+# # La respuesta es una lista, aunque generalmente solo tiene un elemento
+            for entrada in datos:
+                
+                # # Iterar sobre las diferentes partes del discurso (meanings)
+                for significado in entrada.get('meanings', []):
+                    
+                    parte_del_discurso = significado.get('partOfSpeech', 'N/A')
+                    print(f"\n# --- Parte del Discurso: *{parte_del_discurso.capitalize()}* ---")
+                    
+                    # # Iterar sobre las definiciones específicas
+                    definiciones_lista = significado.get('definitions', [])
+                    
+                    if not definiciones_lista:
+                        print("# No hay definiciones disponibles.")
+                        continue
+                        
+                    for i, definicion in enumerate(definiciones_lista, 1):
+                        definicion_texto = definicion.get('definition', 'Definición no encontrada.')
+                        ejemplo = definicion.get('example')
+                        
+                        print(f"# {i}. {definicion_texto}")
+                        if ejemplo:
+                            print(f"#    *Ejemplo:* \"{ejemplo}\"")
+
+            print("\n# --------------------------------------------------------------")
+            
+        elif response.status_code == 404:
+            print(f"\n# Lo siento, no se encontró ninguna definición para la palabra: '{palabra.capitalize()}'.")
+        else:
+            print(f"# ¡Error al obtener los datos! Código de estado: {response.status_code}")
+            print(f"# Mensaje: {response.json().get('title', 'Error desconocido')}")
+
+    except requests.exceptions.RequestException as e:
+        print(f"# Ocurrió un error de conexión: {e}")
+    except json.JSONDecodeError:
+        print("# Ocurrió un error al decodificar la respuesta JSON.")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Buscador de Definiciones.")
+    print("# Este script usa la Free Dictionary API (en inglés).")
+    
+    while True:
+        try:
+            palabra_busqueda = input("\n# Ingresa la palabra a buscar (o 'salir' para terminar): ").strip()
+            
+            if palabra_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Buscador de Definiciones.")
+                break
+            
+            if palabra_busqueda:
+                buscar_definicion(palabra_busqueda.lower()) # # Convertir a minúsculas para la búsqueda
+            else:
+                print("# Por favor, ingresa una palabra válida.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Buscador de Definiciones.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Buscador de Definiciones.")
+            break
+```
+
+

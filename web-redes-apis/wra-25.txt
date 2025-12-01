@@ -1,0 +1,117 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# ¡Excelente e importante aplicación de seguridad\! Aquí tienes una aplicación en Python para un **Verificador de Contraseña Comprometida**.
+
+# Utilizaremos el servicio **"Have I Been Pwned" (HIBP)**, específicamente su API **"Pwned Passwords"**. Esta API usa la técnica de **k-Anonymity** (anonimato-k) para permitirte verificar una contraseña sin enviar la contraseña completa, protegiendo así la privacidad del usuario.
+
+# **¿Cómo funciona el anonimato-k (SHA-1 y HIBP)?**
+
+# 1\. El script toma la contraseña del usuario y calcula su hash **SHA-1** (un código único de 40 caracteres).
+
+# 2\. **Solo** envía los **primeros 5 caracteres** del hash a la API de HIBP.
+
+# 3\. La API devuelve **todos los hashes** que comienzan con esos 5 caracteres, junto con el número de veces que se han encontrado en filtraciones.
+
+# 4\. El script compara el hash **completo** del usuario con la lista de hashes devueltos localmente.
+
+# 5\. Si hay una coincidencia, la contraseña ha sido comprometida.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Usaremos la librería `requests` para las peticiones HTTP.
+
+# `pip install requests`
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo.
+
+```python
+import hashlib
+import requests
+
+# # --- Configuración ---
+# # Endpoint de la API de Pwned Passwords
+API_URL = "https://api.pwnedpasswords.com/range/"
+# --------------------
+
+# # Función principal para verificar la contraseña
+def verificar_contrasena_comprometida(contrasena):
+    
+    # # 1. Calcular el hash SHA-1 de la contraseña (en mayúsculas)
+    contrasena_encoded = contrasena.encode('utf-8')
+    hash_sha1 = hashlib.sha1(contrasena_encoded).hexdigest().upper()
+    
+    # # 2. Dividir el hash para la consulta de k-Anonymity
+    hash_prefijo = hash_sha1[:5]
+    hash_sufijo = hash_sha1[5:]
+    
+    print(f"\n# Hash SHA-1 generado: {hash_prefijo}{hash_sufijo}")
+    print(f"# Consultando API con prefijo: {hash_prefijo}")
+
+    try:
+        # # 3. Enviar el prefijo a la API
+        response = requests.get(API_URL + hash_prefijo)
+        response.raise_for_status() # # Lanza una excepción si hay un error en el código de estado
+        
+        # # 4. Procesar la respuesta
+        # # La respuesta es una lista de sufijos de hash y sus recuentos, separados por ":".
+        hashes_comprometidos = response.text.splitlines()
+        
+        encontrada = False
+        veces_filtrada = 0
+        
+        # # 5. Buscar el sufijo completo del usuario en la lista devuelta
+        for linea in hashes_comprometidos:
+            sufijo_api, recuento = linea.split(':')
+            
+            if sufijo_api == hash_sufijo:
+                encontrada = True
+                veces_filtrada = int(recuento)
+                break
+        
+        # # 6. Mostrar el resultado
+        print("\n# ==============================================================")
+        if encontrada:
+            print(f"# ❌ ¡CONTRASEÑA COMPROMETIDA ENCONTRADA! 🚨")
+            print(f"# Esta contraseña fue filtrada **{veces_filtrada:,}** veces en bases de datos públicas.")
+            print("# **ACCIÓN REQUERIDA:** ¡Cambia esta contraseña inmediatamente en todos tus servicios!")
+        else:
+            print("# ✅ ¡Contraseña NO ENCONTRADA en las filtraciones públicas! 🎉")
+            print("# (Esto no garantiza seguridad, pero indica que no ha sido expuesta públicamente).")
+            
+        print("# ==============================================================")
+        
+    except requests.exceptions.RequestException as e:
+        print(f"\n# Ocurrió un error al conectar con la API: {e}")
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Verificador de Contraseñas Comprometidas (API HIBP).")
+    print("# Tu privacidad está protegida: solo se envían los primeros 5 caracteres del hash de tu contraseña.")
+    
+    while True:
+        try:
+            # # Usamos input() para la entrada y strip() para eliminar espacios
+            contrasena_busqueda = input("\n# Ingresa la contraseña a verificar (o 'salir'): ").strip()
+            
+            if contrasena_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Verificador de Contraseñas.")
+                break
+            
+            if contrasena_busqueda:
+                verificar_contrasena_comprometida(contrasena_busqueda)
+            else:
+                print("# Por favor, ingresa una contraseña.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Verificador de Contraseñas.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Verificador de Contraseñas.")
+            break
+```
+
+

@@ -1,0 +1,126 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# ¡Claro\! Aquí tienes la aplicación en Python para un **Lector y Visualizador de JSON** que puede manejar estructuras anidadas y las muestra de forma clara en la consola.
+
+# Este script utiliza el módulo estándar **`json`** de Python y una función recursiva para recorrer y mostrar la estructura con indentación.
+
+# **Instrucciones Previas:**
+
+# 1\. **Crea un Archivo JSON:** Crea un archivo llamado `datos_ejemplo.json` en la misma carpeta que tu script con contenido JSON anidado, como el siguiente ejemplo:
+
+# \`\`\`json
+
+# {
+
+# "nombre\_proyecto": "Lector JSON",
+
+# "version": 1.0,
+
+# "configuracion": {
+
+# "timeout": 5000,
+
+# "log\_level": "DEBUG",
+
+# "parametros": [
+
+# {"clave": "usuario", "tipo": "string"},
+
+# {"clave": "id", "tipo": "integer"}
+
+# ]
+
+# },
+
+# "activos": true
+
+# }
+
+# \`\`\`
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo.
+
+```python
+import json
+import os
+from collections import OrderedDict
+
+# # --- Configuración ---
+# # Nombre del archivo JSON de ejemplo a leer
+NOMBRE_ARCHIVO_JSON = "datos_ejemplo.json"
+# --------------------
+
+# # Función recursiva para visualizar la estructura del JSON
+def visualizar_estructura(datos, nivel=0):
+    
+    # # Definir el prefijo de indentación basado en el nivel
+    indent = "    " * nivel
+    
+    # # Verificar si los datos son un diccionario (objeto JSON)
+    if isinstance(datos, dict):
+        print(f"{indent}# 📂 Objeto (Diccionario):")
+        # # Iterar sobre las claves del diccionario
+        for clave, valor in datos.items():
+            print(f"{indent}# 🔑 Clave: **{clave}**")
+            # # Llamada recursiva para el valor
+            visualizar_estructura(valor, nivel + 1)
+            
+    # # Verificar si los datos son una lista (array JSON)
+    elif isinstance(datos, list):
+        print(f"{indent}# 📑 Lista (Array) con {len(datos)} elementos:")
+        # # Iterar sobre los elementos de la lista
+        for i, elemento in enumerate(datos):
+            print(f"{indent}# 📍 Elemento [{i}]:")
+            # # Llamada recursiva para cada elemento
+            visualizar_estructura(elemento, nivel + 1)
+            
+    # # Si es un tipo de dato simple (string, número, booleano, nulo)
+    else:
+        tipo_dato = type(datos).__name__
+        valor_str = str(datos) if len(str(datos)) < 50 else str(datos)[:47] + "..."
+        print(f"{indent}# 📝 Valor: Tipo=*{tipo_dato}*, Contenido='{valor_str}'")
+
+
+# # Función principal para cargar y analizar el archivo
+def cargar_y_analizar_json(nombre_archivo):
+    
+    if not os.path.exists(nombre_archivo):
+        print(f"\n# ¡Error! El archivo '{nombre_archivo}' no se encontró.")
+        print("# Por favor, crea el archivo JSON de ejemplo en la misma carpeta.")
+        return
+
+    print(f"\n# Cargando datos de: **{nombre_archivo}**")
+    
+    try:
+        with open(nombre_archivo, 'r', encoding='utf-8') as f:
+            # # Usar OrderedDict para mantener el orden de las claves, lo que ayuda a la visualización
+            datos_json = json.load(f, object_pairs_hook=OrderedDict)
+            
+            print("\n# ==============================================================")
+            print("# Estructura Anidada del Archivo JSON:")
+            print("# ==============================================================")
+            
+            # # Iniciar la visualización recursiva
+            visualizar_estructura(datos_json)
+            
+            print("\n# --------------------------------------------------------------")
+            
+    except json.JSONDecodeError as e:
+        print(f"\n# ❌ ¡Error de Formato JSON! El archivo no es un JSON válido.")
+        print(f"# Detalle del error: {e}")
+        print("# Revisa la sintaxis, especialmente las comas y comillas dobles.")
+    except Exception as e:
+        print(f"\n# ❌ Ocurrió un error inesperado al leer el archivo: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Lector y Visualizador de JSON.")
+    
+    # # Llamar a la función de análisis
+    cargar_y_analizar_json(NOMBRE_ARCHIVO_JSON)
+
+```
+
+

@@ -1,0 +1,91 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Absolutamente\! Aquí tienes una aplicación en Python para un **Analizador de Encabezados HTTP**.
+
+# Este script utiliza la librería `requests` para realizar una solicitud `HEAD` (que es más eficiente para solo obtener encabezados que una `GET`) y luego imprime todos los encabezados de la respuesta de una URL dada.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install requests`
+
+```python
+import requests
+from urllib.parse import urlparse
+
+# # --- Configuración Global ---
+# # Timeout predeterminado para las solicitudes (en segundos)
+TIMEOUT_SEGUNDOS = 10
+# --------------------
+
+# # Función principal para obtener y mostrar los encabezados
+def analizar_encabezados(url):
+    
+    # # Asegurar que la URL tenga un esquema (http/https)
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url # # Intentar con https por defecto
+
+    print(f"\n# Enviando solicitud HEAD a: **{url}**...")
+
+    try:
+        # # Usar el método HEAD, que solo recupera los encabezados sin descargar el cuerpo
+        response = requests.head(url, timeout=TIMEOUT_SEGUNDOS, allow_redirects=True)
+        
+        # # Lanza una excepción si el código de estado es un error (4xx o 5xx)
+        response.raise_for_status() 
+
+        # # --- Mostrar Resultados ---
+        print("\n# ==============================================================")
+        print(f"# ✅ Encabezados de Respuesta HTTP para: {url}")
+        print("# ==============================================================")
+        
+        print(f"# Código de Estado (Status Code): **{response.status_code}**")
+        print(f"# URL Final (después de redirecciones): {response.url}")
+        print("\n# --- Lista Completa de Encabezados ---")
+        
+        # # Recorrer e imprimir todos los encabezados de la respuesta
+        for clave, valor in response.headers.items():
+            # # Formato Clave: Valor
+            print(f"# **{clave}**: {valor}")
+            
+        print("\n# --------------------------------------------------------------")
+        
+    except requests.exceptions.HTTPError as errh:
+        print(f"\n# ¡Error HTTP! Código de estado: {errh.response.status_code}.")
+        print("# El servidor respondió con un error.")
+    except requests.exceptions.Timeout:
+        print(f"\n# ¡Error de Timeout! La solicitud tardó más de {TIMEOUT_SEGUNDOS} segundos.")
+    except requests.exceptions.RequestException as e:
+        print(f"\n# Ocurrió un error de conexión o solicitud: {e}")
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Analizador de Encabezados HTTP.")
+    print("# Muestra toda la información que el servidor web envía en la respuesta.")
+    
+    while True:
+        try:
+            url_busqueda = input("\n# Ingresa la URL a analizar (ej. google.com o 'salir'): ").strip()
+            
+            if url_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Analizador de Encabezados HTTP.")
+                break
+            
+            if url_busqueda:
+                analizar_encabezados(url_busqueda)
+            else:
+                print("# Por favor, ingresa una URL válida.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Analizador de Encabezados HTTP.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Analizador de Encabezados HTTP.")
+            break
+```
+
+

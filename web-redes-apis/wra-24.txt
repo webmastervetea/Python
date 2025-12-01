@@ -1,0 +1,134 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Claro\! Crearemos una aplicación en Python que actúe como un **Rastreador de Tendencias**.
+
+# Dado que la API gratuita de **Twitter (X)** es muy restrictiva y la de **Reddit** es más accesible para la lectura de contenido, usaremos la API de Reddit vía la librería **`PRAW`** (Python Reddit API Wrapper) para obtener los temas o publicaciones más populares (trending) de un subreddit específico.
+
+# **Instrucciones Previas (¡Muy Importantes\!):**
+
+# 1\. **Crea una Aplicación en Reddit:**
+
+# \* Ve a [Reddit App Preferences](https://www.reddit.com/prefs/apps).
+
+# \* Haz clic en "**Are you a developer? Create an app...**"
+
+# \* Elige el tipo "**script**".
+
+# \* Anota el **Client ID** (el texto debajo del nombre de la app) y el **Client Secret** (el texto al lado de "**secret**").
+
+# \* También necesitarás tu **nombre de usuario** y **contraseña** de Reddit.
+
+# 2\. **Instalar la librería:**
+
+# `pip install praw`
+
+# 3\. **Reemplaza los Marcadores de Posición:** Reemplaza los valores en la sección de configuración con tus credenciales.
+
+```python
+import praw
+import os
+import datetime
+
+# # --- Configuración de PRAW/Reddit (Reemplaza con tus credenciales) ---
+# # Crea estas credenciales en https://www.reddit.com/prefs/apps
+CLIENT_ID = "TU_CLIENT_ID" 
+CLIENT_SECRET = "TU_CLIENT_SECRET"
+USER_AGENT = "Reddit_Trend_Tracker_v1.0_por_tu_nombre" # # Reemplaza con un nombre descriptivo
+USERNAME = "TU_NOMBRE_DE_USUARIO_REDDIT" 
+PASSWORD = "TU_CONTRASENA_REDDIT"
+# --------------------
+
+# # Número máximo de tendencias a mostrar
+MAX_POSTS = 10 
+
+# # Función principal para conectar y obtener las tendencias
+def obtener_tendencias_reddit(subreddit_nombre):
+    
+    # # 1. Conexión a Reddit API
+    try:
+        reddit = praw.Reddit(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            user_agent=USER_AGENT,
+            username=USERNAME,
+            password=PASSWORD
+        )
+        # # Una prueba simple para asegurar que el cliente funciona
+        if reddit.read_only:
+            print("# Conexión exitosa en modo de solo lectura.")
+        
+    except Exception as e:
+        print("\n# ❌ ¡Error de Conexión a Reddit API!")
+        print("# Asegúrate de que las credenciales (CLIENT_ID, CLIENT_SECRET, USERNAME, PASSWORD) son correctas.")
+        print(f"# Detalle del error: {e}")
+        return
+
+    # # 2. Obtener el Subreddit
+    try:
+        # # Obtener la instancia del subreddit
+        subreddit = reddit.subreddit(subreddit_nombre)
+        
+        print(f"\n# Rastreador de Tendencias para: **r/{subreddit_nombre}**")
+        print("# --------------------------------------------------------------")
+        
+        # # Usar el método 'hot()' para obtener las tendencias más calientes/populares
+        # # Usar el método 'top()' para obtener los más votados históricamente
+        
+        # # Obtener los 10 posts más populares actualmente
+        posts_populares = subreddit.hot(limit=MAX_POSTS)
+        
+        # # 3. Mostrar los resultados
+        for i, post in enumerate(posts_populares, 1):
+            
+            # # Convertir la marca de tiempo de Unix a formato legible
+            tiempo_publicacion = datetime.datetime.fromtimestamp(post.created_utc).strftime('%Y-%m-%d %H:%M')
+            
+            print(f"\n# --- Tendencia {i} ---")
+            print(f"# Título: **{post.title}**")
+            print(f"# Autor: u/{post.author.name if post.author else '[Eliminado]'}")
+            print(f"# Votos (Score): {post.score:,}") # # Formatear el score con separador de miles
+            print(f"# Comentarios: {post.num_comments}")
+            print(f"# Publicado: {tiempo_publicacion}")
+            print(f"# URL: https://www.reddit.com{post.permalink}") 
+
+        print("\n# ==============================================================")
+        
+    except praw.exceptions.PRAWException as e:
+        print(f"\n# ¡Error PRAW! El subreddit '{subreddit_nombre}' no existe o tienes problemas de acceso.")
+        print(f"# Detalle: {e}")
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado al procesar los datos: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    if CLIENT_ID == "TU_CLIENT_ID":
+        print("# --- ADVERTENCIA ---")
+        print("# **Debes configurar las variables CLIENT_ID, CLIENT_SECRET, USERNAME y PASSWORD** con tus credenciales de Reddit API.")
+        print("# -------------------")
+    
+    print("# Bienvenido al Rastreador de Tendencias de Reddit (usando PRAW).")
+    
+    while True:
+        try:
+            # # Subreddits populares para probar: funny, science, programming, AskReddit, espanol
+            sub_busqueda = input("\n# Ingresa el nombre del subreddit a rastrear (ej. 'programming', 'espanol' o 'salir'): ").strip()
+            
+            if sub_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Rastreador de Tendencias.")
+                break
+            
+            if sub_busqueda:
+                obtener_tendencias_reddit(sub_busqueda)
+            else:
+                print("# Por favor, ingresa un nombre de subreddit válido.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Rastreador de Tendencias.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Rastreador de Tendencias.")
+            break
+```
+
+

@@ -1,0 +1,128 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Claro\! Aquí tienes una aplicación en Python para un **Cliente SFTP Básico**.
+
+# Utilizaremos el protocolo **SFTP** (SSH File Transfer Protocol) en lugar de FTP simple, ya que es mucho más **seguro** (utiliza SSH para cifrar la conexión) y es el estándar moderno. Para esto, usaremos la librería **`paramiko`**.
+
+# **Instrucciones Previas (¡Muy Importantes\!):**
+
+# 1\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install paramiko`
+
+# 2\. **Datos de Conexión:** Necesitas un **servidor SFTP** activo, un **nombre de usuario** y una **contraseña** o clave SSH.
+
+# **ADVERTENCIA:** **NUNCA** guardes credenciales sensibles directamente en el código de producción. Para este ejemplo de script básico, las incluimos como variables.
+
+```python
+import paramiko
+import socket
+import os
+
+# # --- Configuración (Reemplaza con tus credenciales del servidor SFTP) ---
+SERVIDOR = "TU_HOST_SFTP"       # # Ejemplo: "sftp.tudominio.com" o una IP
+PUERTO = 22                     # # El puerto por defecto para SFTP (SSH)
+USUARIO = "TU_USUARIO"          # # Tu nombre de usuario SFTP
+CONTRASENA = "TU_CONTRASENA"    # # Tu contraseña SFTP
+# --------------------
+
+# # Función principal para la conexión y listado de archivos
+def conectar_y_listar_sftp(servidor, puerto, usuario, contrasena, ruta_remota='/'):
+    
+    # # Inicializar los clientes SSH y SFTP
+    cliente_ssh = paramiko.SSHClient()
+    
+    # # Política de clave: Añadir automáticamente la clave del host. Útil para pruebas, pero
+    # # para producción se recomienda usar AutoAddPolicy o WarningPolicy y verificar.
+    cliente_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    print(f"\n# Intentando conectar a: **{servidor}:{puerto}** como usuario **{usuario}**...")
+
+    try:
+        # # 1. Conexión SSH
+        cliente_ssh.connect(
+            hostname=servidor,
+            port=puerto,
+            username=usuario,
+            password=contrasena,
+            timeout=10 # # Tiempo de espera para la conexión
+        )
+        print("# ✅ Conexión SSH establecida con éxito.")
+        
+        # # 2. Abrir una sesión SFTP sobre la conexión SSH
+        sftp_cliente = cliente_ssh.open_sftp()
+        print("# ✅ Sesión SFTP iniciada.")
+
+        # # 3. Listar archivos en la ruta remota
+        print(f"\n# --- Listado de archivos en la ruta remota: {ruta_remota} ---")
+        
+        try:
+            archivos = sftp_cliente.listdir(ruta_remota)
+            
+            if archivos:
+                for nombre in archivos:
+                    # # Obtener más detalles del archivo (opcional)
+                    try:
+                        atributos = sftp_cliente.stat(os.path.join(ruta_remota, nombre))
+                        # # Determinar si es un directorio
+                        tipo = "DIR" if paramiko.sftp.S_ISDIR(atributos.st_mode) else "FILE"
+                        # # Formatear el tamaño en bytes
+                        tamano = f"{atributos.st_size} bytes"
+                        print(f"# [{tipo}] {nombre} ({tamano})")
+                    except Exception:
+                        print(f"# [?] {nombre} (No se pudieron obtener detalles)")
+            else:
+                print("# La carpeta remota está vacía.")
+                
+            print("# --------------------------------------------------------------")
+
+        except FileNotFoundError:
+            print(f"# ¡Error! La ruta remota '{ruta_remota}' no existe en el servidor.")
+        except Exception as e:
+            print(f"# ¡Error al listar archivos!: {e}")
+
+    except paramiko.AuthenticationException:
+        print("\n# ❌ ¡Error de Autenticación! El usuario o la contraseña son incorrectos.")
+    except paramiko.SSHException as e:
+        print(f"\n# ❌ ¡Error de SSH! Ocurrió un error en el protocolo: {e}")
+    except socket.timeout:
+        print("\n# ❌ ¡Error de Tiempo de Espera! La conexión tardó demasiado en responder.")
+    except Exception as e:
+        print(f"\n# ❌ Ocurrió un error inesperado al conectar: {e}")
+        
+    finally:
+        # # Asegurar que la conexión SSH se cierre
+        if 'cliente_ssh' in locals() and cliente_ssh.get_transport() is not None:
+            cliente_ssh.close()
+            print("\n# Conexión SFTP/SSH cerrada.")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    if USUARIO == "TU_USUARIO":
+        print("# --- ADVERTENCIA ---")
+        print("# **Debes configurar las variables SERVIDOR, USUARIO y CONTRASENA** con tus credenciales reales.")
+        print("# -------------------")
+    
+    while True:
+        try:
+            ruta = input("\n# Ingresa la ruta remota a listar (ej. /home/user/docs, o '/' por defecto, o 'salir'): ").strip()
+            
+            if ruta.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Cliente SFTP Básico.")
+                break
+                
+            if not ruta:
+                ruta = '/' # # Usar la raíz como defecto
+                
+            conectar_y_listar_sftp(SERVIDOR, PUERTO, USUARIO, CONTRASENA, ruta)
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Cliente SFTP Básico.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Cliente SFTP Básico.")
+            break
+```
+
+

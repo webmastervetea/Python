@@ -1,0 +1,147 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# ¡Claro\! Aquí tienes la aplicación en Python para un **Generador de Mapas con Puntos** utilizando la excelente librería **`folium`**, que te permite crear mapas interactivos basados en la librería de JavaScript Leaflet.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar las librerías:** Necesitas `folium` y `pandas` (para un manejo más limpio de los datos, aunque es opcional para el ejemplo más básico):
+
+# `pip install folium pandas`
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo. El mapa interactivo se guardará como un archivo **HTML** que puedes abrir en cualquier navegador.
+
+```python
+import folium
+import pandas as pd
+import os
+import random
+
+# # --- Configuración ---
+# # Nombre del archivo de salida
+NOMBRE_ARCHIVO_MAPA = "mapa_interactivo_puntos.html"
+# --------------------
+
+# # Datos de ejemplo: Ciudades famosas (Latitud, Longitud, Nombre, Color del Marcador)
+# # Usamos una lista de diccionarios para estructurar los datos
+DATOS_UBICACIONES = [
+    {'lat': 40.7128, 'lon': -74.0060, 'nombre': 'New York City 🗽', 'color': 'blue'},
+    {'lat': 51.5074, 'lon': 0.1278, 'nombre': 'Londres 💂', 'color': 'red'},
+    {'lat': 48.8566, 'lon': 2.3522, 'nombre': 'París 🇫🇷', 'color': 'green'},
+    {'lat': 35.6895, 'lon': 139.6917, 'nombre': 'Tokio 🌸', 'color': 'orange'},
+    {'lat': -33.8688, 'lon': 151.2093, 'nombre': 'Sídney 🐨', 'color': 'purple'}
+]
+
+# # Función principal para generar el mapa
+def generar_mapa_puntos(ubicaciones):
+    
+    if not ubicaciones:
+        print("# No hay ubicaciones para dibujar en el mapa.")
+        return
+
+    # # 1. Crear el objeto Mapa
+    # # Centramos el mapa en la primera ubicación de la lista
+    lat_inicial = ubicaciones[0]['lat']
+    lon_inicial = ubicaciones[0]['lon']
+    
+    # # Inicializamos el mapa centrado y con un nivel de zoom inicial
+    m = folium.Map(location=[lat_inicial, lon_inicial], zoom_start=4, control_scale=True)
+
+    # # 2. Agregar los marcadores al mapa
+    for punto in ubicaciones:
+        
+        # # Crear el marcador (Marker)
+        folium.Marker(
+            location=[punto['lat'], punto['lon']],
+            # # Texto que aparece al hacer clic en el marcador
+            popup=f"<b>{punto['nombre']}</b><br>Lat: {punto['lat']}<br>Lon: {punto['lon']}",
+            # # Texto que aparece al pasar el ratón por encima
+            tooltip=punto['nombre'],
+            # # Personalizar el icono
+            icon=folium.Icon(color=punto['color'], icon='info-sign')
+        ).add_to(m)
+
+    # # 3. Guardar el mapa como archivo HTML
+    try:
+        m.save(NOMBRE_ARCHIVO_MAPA)
+        ruta_absoluta = os.path.abspath(NOMBRE_ARCHIVO_MAPA)
+        print("\n# ==============================================================")
+        print(f"# ✅ Mapa generado con éxito!")
+        print(f"# Archivo guardado en: **{ruta_absoluta}**")
+        print("# ¡Ábrelo con tu navegador web para verlo! (Ej. Doble clic)")
+        print("# ==============================================================")
+    except Exception as e:
+        print(f"# ¡Error al guardar el mapa!: {e}")
+
+
+# # Función para permitir al usuario añadir puntos adicionales
+def agregar_punto_manual(lista_ubicaciones):
+    
+    try:
+        print("\n# --- Añadir un Nuevo Punto al Mapa ---")
+        nombre = input("# Nombre del lugar: ").strip()
+        lat_str = input("# Latitud (ej. 40.71): ").strip()
+        lon_str = input("# Longitud (ej. -74.00): ").strip()
+        
+        # # Colores disponibles para los marcadores
+        colores_disponibles = ['cadetblue', 'darkred', 'darkgreen', 'blue', 'orange', 'black']
+        color_elegido = random.choice(colores_disponibles)
+
+        if nombre and lat_str and lon_str:
+            nueva_ubicacion = {
+                'lat': float(lat_str),
+                'lon': float(lon_str),
+                'nombre': nombre,
+                'color': color_elegido
+            }
+            lista_ubicaciones.append(nueva_ubicacion)
+            print(f"# Punto '{nombre}' agregado. Color: {color_elegido}")
+        else:
+            print("# Entrada incompleta. No se añadió ningún punto.")
+            
+    except ValueError:
+        print("# ¡Error! Latitud y Longitud deben ser números válidos.")
+    except Exception as e:
+        print(f"# Error al procesar la entrada: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    # # Usamos una copia mutable de los datos de ejemplo
+    puntos_a_mapear = DATOS_UBICACIONES.copy()
+    
+    print("# Bienvenido al Generador de Mapas Interactivo con Folium.")
+    print(f"# Mapa base contiene {len(puntos_a_mapear)} ubicaciones de ejemplo.")
+    
+    while True:
+        try:
+            print("\n# --- Opciones ---")
+            print("# 1. Generar Mapa (con los puntos actuales)")
+            print("# 2. Añadir Punto Manualmente")
+            print("# 3. Salir")
+            
+            opcion = input("# Selecciona una opción (1, 2, 3): ").strip()
+            
+            if opcion == '1':
+                generar_mapa_puntos(puntos_a_mapear)
+                
+            elif opcion == '2':
+                agregar_punto_manual(puntos_a_mapear)
+                print(f"# Total de puntos actuales: {len(puntos_a_mapear)}")
+                
+            elif opcion == '3' or opcion.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Generador de Mapas.")
+                break
+            
+            else:
+                print("# Opción no válida. Por favor, ingresa 1, 2 o 3.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Generador de Mapas.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Generador de Mapas.")
+            break
+```
+
+

@@ -1,0 +1,114 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Claro\! Aquí tienes la aplicación en Python para un **Analizador de Robots.txt** que lee y muestra el contenido del archivo `robots.txt` de cualquier sitio web.
+
+# Utilizaremos el módulo estándar **`urllib.request`** de Python para leer el contenido de la URL.
+
+# **Instrucciones Previas:**
+
+# 1\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo.
+
+```python
+import urllib.request
+import urllib.error
+from urllib.parse import urlparse
+
+# # --- Configuración Global ---
+# # Timeout predeterminado para las solicitudes (en segundos)
+TIMEOUT_SEGUNDOS = 5
+# # User-Agent que usaremos para la solicitud
+USER_AGENT = "RobotsTxtAnalyzerBot/1.0 (+http://tu-dominio.com)"
+# --------------------
+
+# # Función principal para leer y mostrar el robots.txt
+def analizar_robots_txt(url_base):
+    
+    # # 1. Normalizar la URL
+    
+    # # Asegurar que la URL comience con http:// o https://
+    if not url_base.startswith(('http://', 'https://')):
+        url_base = 'https://' + url_base
+        
+    # # Parsear la URL para obtener solo el esquema y el host (dominio principal)
+    parsed_url = urlparse(url_base)
+    # # Reconstruir la URL base
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    
+    # # Construir la URL completa del archivo robots.txt
+    robots_url = f"{base_url}/robots.txt"
+    
+    print(f"\n# Intentando descargar: **{robots_url}**")
+
+    # # 2. Preparar la solicitud HTTP
+    try:
+        # # Crear un objeto Request con el User-Agent personalizado
+        req = urllib.request.Request(robots_url, headers={'User-Agent': USER_AGENT})
+        
+        # # Realizar la solicitud
+        with urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS) as response:
+            
+            # # Verificar el código de estado (200 OK es éxito)
+            if response.getcode() == 200:
+                
+                # # Leer y decodificar el contenido
+                contenido_robots = response.read().decode('utf-8')
+                
+                # # --- Mostrar Resultados ---
+                print("\n# ==============================================================")
+                print(f"# ✅ Contenido del archivo robots.txt de: {base_url}")
+                print("# ==============================================================")
+                
+                # # Imprimir todo el contenido
+                print(contenido_robots.strip())
+                
+                print("\n# --------------------------------------------------------------")
+                
+            else:
+                print(f"\n# ¡Error! El servidor respondió con el código de estado: {response.getcode()}")
+                print("# El archivo robots.txt no se pudo descargar correctamente.")
+
+    except urllib.error.HTTPError as e:
+        # # Manejar errores HTTP (ej. 404 Not Found)
+        if e.code == 404:
+            print(f"\n# ❌ ¡Error 404! El archivo **robots.txt** no existe en {base_url}.")
+            print("# Esto generalmente significa que el sitio permite el rastreo completo (por defecto).")
+        else:
+            print(f"\n# ❌ ¡Error HTTP inesperado! Código: {e.code}")
+            print(f"# URL: {robots_url}")
+            
+    except urllib.error.URLError as e:
+        # # Manejar errores de URL (ej. dominio no existe, error de conexión)
+        print(f"\n# ❌ ¡Error de URL! No se pudo conectar o resolver el dominio.")
+        print(f"# Detalle: {e.reason}")
+        
+    except Exception as e:
+        print(f"\n# ❌ Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Analizador de Robots.txt.")
+    print("# Este script descarga y muestra el contenido del archivo robots.txt de un sitio web.")
+    
+    while True:
+        try:
+            url_busqueda = input("\n# Ingresa la URL o Dominio a analizar (ej. google.com, https://twitter.com o 'salir'): ").strip()
+            
+            if url_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Analizador de Robots.txt.")
+                break
+            
+            if url_busqueda:
+                analizar_robots_txt(url_busqueda)
+            else:
+                print("# Por favor, ingresa una URL o dominio válido.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Analizador de Robots.txt.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Analizador de Robots.txt.")
+            break
+```
+
+

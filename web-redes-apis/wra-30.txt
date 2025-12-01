@@ -1,0 +1,126 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# ¡Claro\! Aquí tienes la aplicación en Python para una **Herramienta de Cifrado César**.
+
+# Este script implementa las funciones de cifrado y descifrado para el cifrado César, que es un tipo de cifrado por sustitución donde cada letra del texto plano se reemplaza por una letra un número fijo de posiciones más adelante en el alfabeto.
+
+# **Instrucciones Previas:**
+
+# 1\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo.
+
+```python
+# # --- Configuración Global ---
+# # Definición del alfabeto completo (minúsculas)
+ALFABETO = "abcdefghijklmnopqrstuvwxyz"
+LONGITUD_ALFABETO = len(ALFABETO)
+# --------------------
+
+# # Función principal para cifrar un mensaje
+def cifrar_cesar(texto, clave):
+    
+    # # Inicializar el texto cifrado
+    texto_cifrado = ""
+    
+    # # Normalizar el texto de entrada a minúsculas para simplificar el mapeo
+    texto_normalizado = texto.lower()
+
+    # # Iterar sobre cada carácter del texto
+    for char in texto_normalizado:
+        
+        # # Si el carácter es una letra del alfabeto
+        if char in ALFABETO:
+            
+            # # 1. Encontrar la posición actual de la letra (índice 0-25)
+            indice_original = ALFABETO.index(char)
+            
+            # # 2. Aplicar el desplazamiento (la clave) y usar el módulo para "dar la vuelta" al final
+            # # (índice_original + clave) % 26
+            indice_nuevo = (indice_original + clave) % LONGITUD_ALFABETO
+            
+            # # 3. Obtener la nueva letra cifrada
+            char_cifrado = ALFABETO[indice_nuevo]
+            
+            texto_cifrado += char_cifrado
+            
+        else:
+            # # Si no es una letra (espacios, números, puntuación), se mantiene sin cambios
+            texto_cifrado += char
+            
+    return texto_cifrado
+
+# # Función principal para descifrar un mensaje
+def descifrar_cesar(texto_cifrado, clave):
+    
+    # # El descifrado es equivalente a cifrar con la clave NEGATIVA
+    # # o, alternativamente, (longitud_alfabeto - clave)
+    clave_descifrado = LONGITUD_ALFABETO - (clave % LONGITUD_ALFABETO)
+    
+    # # Reutilizar la función de cifrado con la clave de descifrado
+    texto_descifrado = cifrar_cesar(texto_cifrado, clave_descifrado)
+    
+    return texto_descifrado
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# ==============================================================")
+    print("# **Herramienta de Cifrado César**")
+    print("# Funciona con el alfabeto inglés (a-z) y mantiene otros caracteres.")
+    print("# ==============================================================")
+    
+    while True:
+        try:
+            # # 1. Seleccionar Operación
+            print("\n# --- Opciones ---")
+            print("# 1. Cifrar Mensaje")
+            print("# 2. Descifrar Mensaje")
+            print("# 3. Salir")
+            
+            opcion = input("# Selecciona una opción (1, 2, 3): ").strip()
+            
+            if opcion == '3' or opcion.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar la Herramienta César.")
+                break
+            
+            if opcion not in ['1', '2']:
+                print("# Opción no válida. Por favor, ingresa 1, 2 o 3.")
+                continue
+
+            # # 2. Obtener la Clave (número de desplazamiento)
+            try:
+                clave_input = input("# Ingresa la CLAVE (un número entero, ej. 3): ").strip()
+                clave = int(clave_input)
+            except ValueError:
+                print("# ¡Error! La clave debe ser un número entero.")
+                continue
+            
+            # # 3. Obtener el Mensaje
+            mensaje = input("# Ingresa el MENSAJE: ").strip()
+            
+            if not mensaje:
+                print("# El mensaje no puede estar vacío.")
+                continue
+
+            # # 4. Ejecutar la Operación
+            if opcion == '1':
+                resultado = cifrar_cesar(mensaje, clave)
+                print("\n# --------------------------------------------------------------")
+                print(f"# Mensaje Cifrado: **{resultado}**")
+                print("# --------------------------------------------------------------")
+                
+            elif opcion == '2':
+                resultado = descifrar_cesar(mensaje, clave)
+                print("\n# --------------------------------------------------------------")
+                print(f"# Mensaje Descifrado: **{resultado}**")
+                print("# --------------------------------------------------------------")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar la Herramienta César.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar la Herramienta César.")
+            break
+```
+
+

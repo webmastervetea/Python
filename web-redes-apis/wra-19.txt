@@ -1,0 +1,119 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Excelente elección\! La forma más robusta y popular de enviar SMS programáticamente es usando servicios de comunicación en la nube como **Twilio**.
+
+# Aquí tienes la aplicación en Python para un **Enviador de SMS Básico** que utiliza la librería oficial de Twilio.
+
+# **Instrucciones Previas (¡Muy Importantes\!):**
+
+# 1\. **Crea una Cuenta de Twilio:** Regístrate en Twilio y obtén tu **SID de Cuenta**, tu **Token de Autenticación** y un **Número de Teléfono** de Twilio.
+
+# 2\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install twilio`
+
+# 3\. **Reemplaza los Marcadores de Posición:** Reemplaza `TU_ACCOUNT_SID`, `TU_AUTH_TOKEN` y `TU_NUMERO_TWILIO` en el código con tus credenciales reales.
+
+```python
+from twilio.rest import Client
+
+# # --- Configuración de Twilio (Reemplaza con tus credenciales) ---
+# # Tu Account SID de Twilio
+ACCOUNT_SID = "TU_ACCOUNT_SID" 
+# # Tu Auth Token de Twilio
+AUTH_TOKEN = "TU_AUTH_TOKEN"
+# # El número de teléfono que te dio Twilio (debe ser el que usas para enviar)
+NUMERO_TWILIO = "TU_NUMERO_TWILIO" 
+# # Ejemplo de formato: "+15017122661"
+# --------------------
+
+# # Inicializar el cliente de Twilio fuera de la función principal
+# # Esto permite que el script acceda al servicio
+try:
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
+except Exception as e:
+    # # Este error ocurrirá si las credenciales son incorrectas o no están configuradas
+    client = None
+    print(f"# ERROR DE INICIALIZACIÓN: No se pudo crear el cliente de Twilio. {e}")
+
+
+# # Función para enviar el mensaje SMS
+def enviar_sms(destinatario, mensaje_texto):
+    
+    if client is None:
+        print("\n# No se puede enviar el SMS. El cliente de Twilio no se inicializó correctamente.")
+        print("# Asegúrate de que ACCOUNT_SID y AUTH_TOKEN son correctos.")
+        return
+
+    # # Validar el número de destino (debe incluir el código de país, ej. +34600123456)
+    if not destinatario.startswith('+') or len(destinatario) < 10:
+        print("\n# ¡Advertencia! El número de destino debe incluir el código de país (ej. +34...).")
+        return
+        
+    print(f"\n# Intentando enviar mensaje a: {destinatario}...")
+    
+    try:
+        # # Llamada a la API de Twilio para crear el mensaje
+        message = client.messages.create(
+            to=destinatario,
+            from_=NUMERO_TWILIO,
+            body=mensaje_texto
+        )
+        
+        # # Mostrar el SID del mensaje como confirmación de que Twilio lo aceptó
+        print("\n# --------------------------------------------------------------")
+        print(f"# ✅ ¡SMS Enviado con Éxito!")
+        print(f"# SID del Mensaje (para seguimiento en Twilio): **{message.sid}**")
+        print("# --------------------------------------------------------------")
+        
+    except Exception as e:
+        print("\n# ❌ ¡Error al enviar el SMS!")
+        # # Twilio proporciona errores detallados, aquí mostramos el mensaje general
+        print(f"# Error: {e}")
+        print("# Causa común: Credenciales incorrectas, formato de número erróneo o saldo insuficiente.")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# ==============================================================")
+    print("# **Enviador de SMS Básico con Twilio**")
+    print("# Recuerda que los números de teléfono deben tener el formato internacional (+[código de país][número]).")
+    print("# ==============================================================")
+    
+    if ACCOUNT_SID == "TU_ACCOUNT_SID":
+        print("# --- ADVERTENCIA ---")
+        print("# **Debes configurar las variables ACCOUNT_SID, AUTH_TOKEN y NUMERO_TWILIO** para que el script funcione.")
+        print("# -------------------")
+    
+    while True:
+        try:
+            # # 1. Número de Destino
+            numero_destino = input("\n# Ingresa el número de destino (ej. +34600123456 o 'salir'): ").strip()
+            
+            if numero_destino.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Enviador de SMS.")
+                break
+                
+            if not numero_destino:
+                print("# Por favor, ingresa un número de teléfono.")
+                continue
+                
+            # # 2. Mensaje de Texto
+            mensaje_a_enviar = input("# Ingresa el mensaje de texto a enviar: ").strip()
+            
+            if not mensaje_a_enviar:
+                print("# El mensaje no puede estar vacío.")
+                continue
+                
+            # # Llamar a la función de envío
+            enviar_sms(numero_destino, mensaje_a_enviar)
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Enviador de SMS.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Enviador de SMS.")
+            break
+```
+
+

@@ -1,0 +1,135 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Claro\! Aquí tienes la aplicación en Python para un **Generador de Sitemaps XML**.
+
+# Este script crea un archivo `sitemap.xml` basado en una lista de URLs proporcionadas por el usuario, utilizando el formato estándar XML de sitemaps.
+
+# **Instrucciones Previas:**
+
+# 1\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo. El sitemap se generará como un archivo **XML** en la misma carpeta.
+
+```python
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+import datetime
+import os
+
+# # --- Configuración Global ---
+# # URL base del sitio web (necesaria para el sitemap)
+URL_BASE_SITIO = "https://www.tu-dominio.com"
+# # Nombre del archivo de salida
+NOMBRE_SITEMAP = "sitemap.xml"
+# # Namespace (espacio de nombres) estándar de Google Sitemaps
+XML_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
+# --------------------
+
+# # Función para dar formato bonito al XML (indentación)
+def prettify_xml(elem):
+    """Retorna una cadena XML con formato legible (indentado)."""
+    # # Convierte el elemento ET en una cadena
+    rough_string = ET.tostring(elem, 'utf-8')
+    # # Usa minidom para parsear y prettify (dar formato bonito)
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent="  ")
+
+# # Función principal para generar el sitemap
+def generar_sitemap_xml(urls, url_base):
+    
+    if not urls:
+        print("# ¡Advertencia! No se proporcionaron URLs para generar el sitemap.")
+        return
+
+    # # 1. Crear el elemento raíz (<urlset>)
+    # # El elemento raíz debe llevar el namespace
+    urlset = ET.Element('urlset', xmlns=XML_NAMESPACE)
+
+    # # 2. Obtener la fecha de la última modificación (hoy) en formato W3C Datetime
+    lastmod = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    # # 3. Recorrer la lista de URLs y añadir cada una
+    for url_path in urls:
+        
+        # # Asegurar que la URL completa es correcta (ej. uniendo la base y la ruta)
+        # # Si el path ya incluye la base, no la duplicamos
+        loc_url = url_path if url_path.startswith('http') else url_base + url_path
+        
+        # # Crear el elemento <url> para cada entrada
+        url_entry = ET.SubElement(urlset, 'url')
+        
+        # # Añadir el elemento <loc> (Ubicación de la URL, obligatorio)
+        ET.SubElement(url_entry, 'loc').text = loc_url
+        
+        # # Añadir el elemento <lastmod> (Fecha de última modificación, opcional)
+        ET.SubElement(url_entry, 'lastmod').text = lastmod
+        
+        # # Opcional: <changefreq> (Frecuencia de cambio)
+        # # ET.SubElement(url_entry, 'changefreq').text = 'weekly'
+        
+        # # Opcional: <priority> (Prioridad 0.0 a 1.0)
+        # # ET.SubElement(url_entry, 'priority').text = '0.8'
+
+    # # 4. Generar el XML con formato y guardarlo
+    try:
+        # # Obtener el XML con formato legible
+        xml_string = prettify_xml(urlset)
+        
+        with open(NOMBRE_SITEMAP, "w", encoding="utf-8") as f:
+            # # El minidom.toprettyxml ya añade la declaración XML al inicio
+            f.write(xml_string)
+            
+        ruta_absoluta = os.path.abspath(NOMBRE_SITEMAP)
+        print("\n# ==============================================================")
+        print(f"# ✅ Sitemap XML generado con éxito!")
+        print(f"# Archivo guardado en: **{ruta_absoluta}**")
+        print("# Recuerda subirlo a la raíz de tu dominio y notificar a los motores de búsqueda.")
+        print("# ==============================================================")
+        
+    except Exception as e:
+        print(f"# ¡Error al guardar el archivo XML!: {e}")
+
+
+# # Bucle principal de la aplicación y manejo de entrada de usuario
+if __name__ == "__main__":
+    
+    if URL_BASE_SITIO == "https://www.tu-dominio.com":
+        print("# --- ADVERTENCIA ---")
+        print("# **Recuerda cambiar la variable URL_BASE_SITIO** en el script por tu dominio real.")
+        print("# -------------------")
+    
+    print("# Bienvenido al Generador de Sitemaps XML.")
+    print("# Ingresa las rutas relativas o completas de tus páginas.")
+    print("# Rutas de ejemplo: /, /acerca-de, /blog/post-1")
+    
+    lista_urls = []
+    
+    # # Bucle para la entrada de URLs
+    while True:
+        try:
+            url_input = input("\n# Añade URL (o 'generar' para crear el sitemap): ").strip()
+            
+            if url_input.lower() == 'generar':
+                break
+            
+            if url_input.lower() == 'salir':
+                print("# Operación cancelada. ¡Adiós!")
+                exit()
+            
+            if url_input:
+                # # Asegurar que las URLs relativas empiecen con '/'
+                if not url_input.startswith('/') and not url_input.startswith('http'):
+                    url_input = '/' + url_input
+                lista_urls.append(url_input)
+                print(f"# Añadido: {URL_BASE_SITIO}{url_input}")
+            else:
+                print("# Por favor, ingresa una ruta válida.")
+
+        except EOFError:
+            break
+        except KeyboardInterrupt:
+            break
+            
+    # # Generar el sitemap con las URLs recopiladas
+    generar_sitemap_xml(lista_urls, URL_BASE_SITIO)
+
+```
+
+

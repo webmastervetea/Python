@@ -1,0 +1,107 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Excelente idea para un script de monitoreo básico\! Aquí tienes una aplicación en Python para un **Registro de Eventos de Red**.
+
+# Este script verifica periódicamente si tienes conexión a Internet intentando hacer ping a un sitio confiable (como Google) y registra el estado (subida o bajada de la conexión) en un archivo de texto con marca de tiempo.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Usaremos la librería `requests` para la verificación de conexión. Si no la tienes instalada:
+
+# `pip install requests`
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` (por ejemplo, `monitoreo_red.py`) y ejecútalo. **Este script se ejecutará continuamente hasta que lo detengas (Ctrl+C).**
+
+```python
+import requests
+import time
+import datetime
+import os
+
+# # --- Configuración ---
+# # URL para verificar la conexión (debe ser un sitio muy confiable y rápido)
+URL_VERIFICACION = "https://www.google.com"
+# # Intervalo de tiempo entre verificaciones (en segundos)
+INTERVALO_SEGUNDOS = 5
+# # Nombre del archivo de registro
+NOMBRE_ARCHIVO_LOG = "registro_eventos_red.log"
+# --------------------
+
+# # Variable para rastrear el estado actual de la conexión
+estado_anterior = None # # Inicialmente no sabemos el estado
+
+# # Función para registrar un evento en el archivo
+def registrar_evento(mensaje):
+    
+    # # Obtener la marca de tiempo actual formateada
+    marca_tiempo = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # # Formatear la línea de registro
+    linea_log = f"[{marca_tiempo}] {mensaje}\n"
+    
+    # # Escribir la línea en el archivo de registro
+    try:
+        with open(NOMBRE_ARCHIVO_LOG, "a") as f:
+            f.write(linea_log)
+        print(f"# REGISTRO: {mensaje.strip()}")
+    except Exception as e:
+        print(f"# ¡Error al escribir en el archivo de log!: {e}")
+
+# # Función para verificar la conexión a Internet
+def verificar_conexion():
+    try:
+        # # Intentar hacer una solicitud GET con un tiempo de espera breve
+        requests.get(URL_VERIFICACION, timeout=5)
+        return True # # Si la solicitud tiene éxito, hay conexión
+    except requests.exceptions.RequestException:
+        return False # # Si hay un error (timeout, DNS, etc.), no hay conexión
+
+
+# # Bucle principal de monitoreo
+if __name__ == "__main__":
+    
+    print("# ==============================================================")
+    print("# **Monitor de Eventos de Red**")
+    print(f"# Verificando conexión cada {INTERVALO_SEGUNDOS} segundos...")
+    print(f"# Los eventos se registrarán en: {os.path.abspath(NOMBRE_ARCHIVO_LOG)}")
+    print("# Presiona Ctrl+C para detener el monitoreo.")
+    print("# ==============================================================")
+    
+    try:
+        while True:
+            # # Verificar el estado actual
+            esta_conectado = verificar_conexion()
+            
+            # # Si es la primera ejecución, simplemente establecer el estado inicial
+            if estado_anterior is None:
+                if esta_conectado:
+                    estado_anterior = True
+                    registrar_evento("CONEXIÓN INICIAL: Red operativa.")
+                else:
+                    estado_anterior = False
+                    registrar_evento("CONEXIÓN INICIAL: Red inoperativa o caída.")
+            
+            # # Lógica de detección de cambio de estado
+            elif esta_conectado != estado_anterior:
+                
+                if esta_conectado:
+                    mensaje = "**CONEXIÓN ESTABLECIDA (UP):** La red ha vuelto a funcionar."
+                    estado_anterior = True
+                else:
+                    mensaje = "**CONEXIÓN CAÍDA (DOWN):** La red ha perdido la conectividad."
+                    estado_anterior = False
+                
+                registrar_evento(mensaje)
+                
+            # # Esperar el intervalo definido antes de la próxima verificación
+            time.sleep(INTERVALO_SEGUNDOS)
+            
+    except KeyboardInterrupt:
+        print("\n# Monitoreo detenido por el usuario (Ctrl+C).")
+        print("# ¡Adiós!")
+    except Exception as e:
+        registrar_evento(f"ERROR FATAL EN EL SCRIPT: {e}")
+        print(f"\n# Un error inesperado detuvo el script: {e}")
+
+```
+
+

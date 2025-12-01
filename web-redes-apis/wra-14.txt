@@ -1,0 +1,113 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# ¡Claro\! Aquí tienes una aplicación en Python para un **Verificador de Disponibilidad de Dominio**.
+
+# Dado que no existe una única API estándar y gratuita para verificar la disponibilidad de dominios que funcione sin autenticación o limitaciones estrictas, la forma más común y sencilla de implementar esto es verificando si el dominio ya está **registrado** y tiene **servidores de nombres (NS)** asociados.
+
+# Utilizaremos la librería `python-whois` para consultar la información del dominio (similar a lo que hacen los registradores).
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install python-whois`
+
+# *(Nota: En algunos sistemas Linux puede que necesites instalar el comando whois del sistema operativo)*
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo.
+
+```python
+import whois
+import re
+
+# # Función principal para verificar el dominio
+def verificar_dominio(nombre_dominio):
+    
+    # # Limpiar y formatear el dominio para asegurar que no tenga prefijos como http:// o www.
+    nombre_dominio = nombre_dominio.strip().lower()
+    nombre_dominio = re.sub(r'^(https?:\/\/)?(www\.)?', '', nombre_dominio)
+    
+    if not nombre_dominio:
+        return "\n# Por favor, ingresa un dominio válido."
+        
+    print(f"\n# Buscando información de WHOIS para: **{nombre_dominio}**...")
+
+    try:
+        # # Intentar obtener la información WHOIS del dominio
+        info_dominio = whois.whois(nombre_dominio)
+        
+        # # Una forma robusta de verificar la disponibilidad es buscar la fecha de expiración.
+        # # Si la fecha de expiración no se encuentra, o si la respuesta indica que el dominio no existe,
+        # # se asume que está libre. Sin embargo, si encontramos datos, asumimos que está registrado.
+        
+        # # Comprobar si existe la clave 'expiration_date' o 'registrar'
+        # # La librería `whois` devuelve un objeto WHOIS. Si no lo encuentra, a menudo devuelve un diccionario vacío o nulo.
+        
+        if info_dominio and (info_dominio.expiration_date or info_dominio.registrar):
+            
+            # # Si se encuentra información, se asume que está REGISTRADO.
+            print("\n# -------------------------------------------------------------")
+            print(f"# ❌ ¡El dominio **{nombre_dominio}** NO ESTÁ DISPONIBLE!")
+            print("# -------------------------------------------------------------")
+            
+            # # Mostrar información adicional si está disponible
+            if info_dominio.registrar:
+                print(f"# Registrado a través de: {info_dominio.registrar}")
+            if info_dominio.creation_date:
+                print(f"# Fecha de Creación: {info_dominio.creation_date}")
+            if info_dominio.expiration_date:
+                print(f"# Fecha de Expiración: {info_dominio.expiration_date}")
+            print("# -------------------------------------------------------------")
+            
+        else:
+            # # Si la respuesta es vacía o incompleta, se asume que está LIBRE.
+            print("\n# -------------------------------------------------------------")
+            print(f"# ✅ ¡El dominio **{nombre_dominio}** ESTÁ DISPONIBLE!")
+            print("# ¡Puedes registrarlo ahora mismo!")
+            print("# -------------------------------------------------------------")
+            
+    except whois.parser.PywhoisError as e:
+        # # Manejo de errores específicos de la librería whois (a menudo significa que no se encontró el dominio)
+        error_msg = str(e).strip()
+        
+        # # A veces, los errores de WHOIS significan que el dominio está libre
+        if "No match for" in error_msg or "Domain not found" in error_msg:
+            print("\n# -------------------------------------------------------------")
+            print(f"# ✅ ¡El dominio **{nombre_dominio}** ESTÁ DISPONIBLE!")
+            print("# ¡Puedes registrarlo ahora mismo!")
+            print("# -------------------------------------------------------------")
+        else:
+            print(f"\n# Ocurrió un error al procesar WHOIS: {error_msg}")
+            
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Verificador de Disponibilidad de Dominio.")
+    print("# Comprueba si un dominio está registrado (ej. google.com o midominio.net).")
+    
+    while True:
+        try:
+            dominio_busqueda = input("\n# Ingresa el dominio a verificar (o 'salir' para terminar): ").strip()
+            
+            if dominio_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Verificador de Dominio.")
+                break
+            
+            if dominio_busqueda:
+                verificar_dominio(dominio_busqueda)
+            else:
+                print("# Por favor, ingresa un nombre de dominio válido.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Verificador de Dominio.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Verificador de Dominio.")
+            break
+```
+
+

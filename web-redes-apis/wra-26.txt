@@ -1,0 +1,167 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# ¡Claro\! Aquí tienes la aplicación en Python para un **Notificador de Cumpleaños** que lee un archivo CSV y envía recordatorios por correo electrónico.
+
+# Utilizaremos el módulo estándar de Python **`csv`** para leer el archivo y los módulos **`smtplib`** y **`email`** para enviar el correo electrónico.
+
+# **Instrucciones Previas (¡Muy Importantes\!):**
+
+# 1\. **Crea el Archivo CSV:** Crea un archivo llamado `cumpleanios.csv` en la misma carpeta que tu script con el siguiente formato:
+
+# \`\`\`csv
+
+# nombre,correo,dia,mes
+
+# Ana Pérez,ana.perez@ejemplo.com,27,11
+
+# Juan Gómez,juan.gomez@ejemplo.com,1,12
+
+# \`\`\`
+
+# 2\. **Configura tu Correo Electrónico:** Para que `smtplib` funcione, necesitas configurar una cuenta de correo electrónico.
+
+# \* **Gmail:** Si usas Gmail, **NO** uses tu contraseña principal. Debes generar una **Contraseña de Aplicación** a través de la configuración de seguridad de tu cuenta.
+
+# \* **Asegúrate de reemplazar los marcadores de posición** con tus datos reales.
+
+# 3\. **Instalar librerías (Solo si no tienes las básicas):**
+
+# `pip install pandas` (opcional, pero ayuda a manejar CSV, aunque aquí usamos el módulo `csv` base)
+
+```python
+import csv
+import smtplib
+from email.mime.text import MIMEText
+import datetime
+import os
+
+# # --- Configuración del Archivo y Email (Ajusta esto) ---
+ARCHIVO_CUMPLEANIOS = "cumpleanios.csv"
+DIAS_DE_ANTICIPACION = 7 # # Días antes para enviar el recordatorio
+
+# # Credenciales y Servidor de Correo (Ejemplo: Gmail)
+EMAIL_EMISOR = "tu_correo@gmail.com"
+CONTRASENA_APP = "TU_CONTRASEÑA_DE_APLICACION" # # ¡Usa una contraseña de app, no la principal!
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587 # # Puerto TLS/STARTTLS
+# --------------------
+
+# # Función para enviar el correo de recordatorio
+def enviar_recordatorio(nombre_contacto, correo_contacto, fecha_cumpleanios):
+    
+    # # Formatear la fecha
+    fecha_formateada = fecha_cumpleanios.strftime("%d de %B")
+    
+    # # Contenido del correo
+    asunto = f"🥳 ¡Recordatorio de Cumpleaños: {nombre_contacto}! 🎂"
+    cuerpo = f"""
+# Hola,
+
+# Este es un recordatorio automático.
+# ¡El cumpleaños de {nombre_contacto} (Email: {correo_contacto}) es pronto, el día **{fecha_formateada}**!
+
+# No olvides enviarle tus mejores deseos.
+
+# Saludos,
+# Tu Notificador de Cumpleaños en Python
+"""
+    
+    # # Crear el objeto MIMEText
+    msg = MIMEText(cuerpo)
+    msg['Subject'] = asunto
+    msg['From'] = EMAIL_EMISOR
+    msg['To'] = EMAIL_EMISOR # # Nos lo enviamos a nosotros mismos como recordatorio
+    
+    # # Establecer conexión con el servidor SMTP
+    try:
+        # # Crear la conexión segura (STARTTLS)
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls() # # Habilitar cifrado
+            server.login(EMAIL_EMISOR, CONTRASENA_APP)
+            server.sendmail(EMAIL_EMISOR, EMAIL_EMISOR, msg.as_string())
+            
+        print(f"# ✅ Recordatorio enviado para: **{nombre_contacto}** ({fecha_formateada}).")
+        return True
+        
+    except smtplib.SMTPAuthenticationError:
+        print("\n# ❌ ERROR DE AUTENTICACIÓN: Usuario o Contraseña de Aplicación incorrectos. Revisa tu configuración de Gmail.")
+        return False
+    except Exception as e:
+        print(f"\n# ❌ ERROR al enviar correo para {nombre_contacto}: {e}")
+        return False
+
+
+# # Función principal para leer y verificar los cumpleaños
+def verificar_cumpleanios():
+    
+    if not os.path.exists(ARCHIVO_CUMPLEANIOS):
+        print(f"\n# ¡Error! El archivo '{ARCHIVO_CUMPLEANIOS}' no se encontró. Asegúrate de crearlo en el directorio correcto.")
+        return
+
+    hoy = datetime.date.today()
+    fecha_limite = hoy + datetime.timedelta(days=DIAS_DE_ANTICIPACION)
+    
+    cumpleanios_encontrados = 0
+    
+    print(f"\n# Fecha de verificación: {hoy.strftime('%Y-%m-%d')}")
+    print(f"# Buscando cumpleaños entre hoy y el: {fecha_limite.strftime('%Y-%m-%d')}")
+    print("# --------------------------------------------------------------")
+
+    try:
+        with open(ARCHIVO_CUMPLEANIOS, mode='r', encoding='utf-8') as archivo:
+            # # Usar el lector de diccionario para manejar los encabezados
+            lector_csv = csv.DictReader(archivo)
+            
+            for fila in lector_csv:
+                try:
+                    nombre = fila['nombre']
+                    correo = fila['correo']
+                    dia = int(fila['dia'])
+                    mes = int(fila['mes'])
+                    
+                    # # Usar el año actual para la comparación
+                    fecha_cumpleanios = datetime.date(hoy.year, mes, dia)
+
+                    # # Si el cumpleaños ya pasó este año, lo verificamos para el próximo
+                    if fecha_cumpleanios < hoy:
+                        fecha_cumpleanios = fecha_cumpleanios.replace(year=hoy.year + 1)
+                    
+                    # # Verificar si el cumpleaños está dentro del rango de días de anticipación
+                    if hoy <= fecha_cumpleanios <= fecha_limite:
+                        
+                        dias_restantes = (fecha_cumpleanios - hoy).days
+                        print(f"# Cumpleaños de {nombre} encontrado. Faltan **{dias_restantes} días**.")
+                        
+                        # # Enviar el recordatorio
+                        enviar_recordatorio(nombre, correo, fecha_cumpleanios)
+                        cumpleanios_encontrados += 1
+                        
+                except ValueError:
+                    print(f"# ¡Advertencia! Error al leer la fila (fechas no numéricas): {fila}")
+                except KeyError as e:
+                    print(f"# ¡Error! Columna '{e}' no encontrada en el CSV. Verifica el formato (nombre,correo,dia,mes).")
+                    return # # Detener si el formato es incorrecto
+
+        if cumpleanios_encontrados == 0:
+            print("# No se encontraron cumpleaños próximos para notificar.")
+            
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado al procesar el archivo: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    if EMAIL_EMISOR == "tu_correo@gmail.com" or CONTRASENA_APP == "TU_CONTRASEÑA_DE_APLICACION":
+        print("# --- ADVERTENCIA ---")
+        print("# **Debes configurar EMAIL_EMISOR y CONTRASENA_APP** con tus credenciales reales para que el envío funcione.")
+        print("# -------------------")
+        
+    print("# Bienvenido al Notificador de Cumpleaños.")
+    
+    # # Llamar a la función de verificación
+    verificar_cumpleanios()
+
+```
+
+

@@ -1,0 +1,118 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# ¡Claro\! Ya que anteriormente creamos un verificador de disponibilidad usando `python-whois`, adaptaremos ese script para crear una **Herramienta Whois Simple** que muestre toda la información de registro disponible para un dominio dado.
+
+# Esta herramienta consultará la base de datos **WHOIS** y extraerá datos como la fecha de creación, la fecha de expiración, el registrador y los servidores de nombres.
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install python-whois`
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` y ejecútalo.
+
+```python
+import whois
+import re
+
+# # Función principal para obtener y mostrar la información WHOIS
+def obtener_info_whois(nombre_dominio):
+    
+    # # Limpiar y formatear el dominio para asegurar que no tenga prefijos como http:// o www.
+    nombre_dominio = nombre_dominio.strip().lower()
+    nombre_dominio = re.sub(r'^(https?:\/\/)?(www\.)?', '', nombre_dominio)
+    
+    if not nombre_dominio:
+        print("\n# Por favor, ingresa un dominio válido.")
+        return
+        
+    print(f"\n# Buscando información de WHOIS para: **{nombre_dominio}**...")
+
+    try:
+        # # Obtener la información WHOIS
+        info_dominio = whois.whois(nombre_dominio)
+        
+        print("\n# ==============================================================")
+        print(f"# Información WHOIS para: **{nombre_dominio}**")
+        print("# ==============================================================")
+        
+        # # 1. Estado de Disponibilidad
+        if not info_dominio.domain_name or info_dominio.status == 'available':
+            print("# ESTADO: Dominio probablemente LIBRE o NO ENCONTRADO en la base de datos WHOIS.")
+            return
+
+        # # 2. Información General
+        print("\n# --- Registro General ---")
+        # # El campo 'domain_name' a menudo es una lista, lo convertimos a cadena
+        domain_name = ', '.join(info_dominio.domain_name) if isinstance(info_dominio.domain_name, list) else info_dominio.domain_name
+        print(f"# Dominio: {domain_name}")
+        print(f"# Registrador: {info_dominio.registrar}")
+        
+        # # 3. Fechas
+        print("\n# --- Fechas Clave ---")
+        print(f"# Fecha de Creación: {info_dominio.creation_date}")
+        print(f"# Fecha de Expiración: {info_dominio.expiration_date}")
+        print(f"# Última Actualización: {info_dominio.updated_date}")
+        
+        # # 4. Servidores de Nombres (DNS)
+        print("\n# --- Servidores de Nombres (DNS) ---")
+        # # El campo 'name_servers' a menudo es una lista, lo mostramos como tal
+        if info_dominio.name_servers:
+            # # Aseguramos que sea una lista para iterar
+            ns_list = info_dominio.name_servers if isinstance(info_dominio.name_servers, list) else [info_dominio.name_servers]
+            for ns in ns_list:
+                print(f"# - {ns}")
+        else:
+            print("# No se encontraron servidores de nombres.")
+            
+        # # 5. Estado y Correo Electrónico del Contacto (Opcional, puede estar redactado)
+        print("\n# --- Estado y Contacto ---")
+        print(f"# Estado del Dominio: {info_dominio.status}")
+        # # Si el contacto de email está disponible
+        if info_dominio.emails:
+            emails = ', '.join(info_dominio.emails) if isinstance(info_dominio.emails, list) else info_dominio.emails
+            print(f"# Email de Contacto: {emails}")
+        else:
+            print("# Email de contacto no disponible (Redactado por privacidad).")
+            
+        print("\n# --------------------------------------------------------------")
+        
+    except whois.parser.PywhoisError as e:
+        # # Este error a menudo indica que el dominio no está registrado o el TLD no es soportado
+        print("\n# -------------------------------------------------------------")
+        print(f"# Error: No se pudo obtener la información WHOIS para '{nombre_dominio}'.")
+        print(f"# Causa probable: Dominio no registrado o TLD no soportado. Mensaje: {e}")
+        print("# -------------------------------------------------------------")
+            
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido a la Herramienta WHOIS Simple.")
+    print("# Muestra la información de registro de un dominio (ej. microsoft.com).")
+    
+    while True:
+        try:
+            dominio_busqueda = input("\n# Ingresa el dominio a consultar (o 'salir' para terminar): ").strip()
+            
+            if dominio_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar la Herramienta WHOIS.")
+                break
+            
+            if dominio_busqueda:
+                obtener_info_whois(dominio_busqueda)
+            else:
+                print("# Por favor, ingresa un nombre de dominio válido.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar la Herramienta WHOIS.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar la Herramienta WHOIS.")
+            break
+```
+
+

@@ -1,0 +1,94 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# **Instrucciones Previas:**
+
+# 1\. **Instalar la librería:** Si no la tienes instalada, usa este comando en tu terminal:
+
+# `pip install wikipedia`
+
+# 2\. **Ejecutar el script:** Guarda el código a continuación como un archivo `.py` (por ejemplo, `lector_wiki.py`) y ejecútalo.
+
+```python
+import wikipedia
+import re
+
+# # --- Configuración ---
+# # Establecer el idioma de Wikipedia a español
+wikipedia.set_lang("es")
+# --------------------
+
+# # Función principal para buscar y obtener el resumen
+def leer_wikipedia(termino_busqueda):
+# # Intentar obtener la página y el resumen
+    try:
+# # Buscar el término y obtener el mejor resultado (el primero)
+        resultados = wikipedia.search(termino_busqueda)
+        
+        if not resultados:
+            print(f"\n# Lo siento, no se encontraron resultados para '{termino_busqueda}'.")
+            return
+
+        # # Tomar el título del primer resultado
+        titulo = resultados[0]
+        
+# # Obtener el resumen de la página. El parámetro 'sentences' controla la longitud.
+        pagina = wikipedia.page(titulo)
+        resumen = wikipedia.summary(titulo, sentences=3) # # Obtener 3 oraciones del resumen
+        
+        
+# # --- Mostrar Resultados ---
+        print("\n# ==============================================================")
+        print(f"# Resultado de Wikipedia para: **{titulo}**")
+        print("# ==============================================================")
+        print(f"# URL de la página: {pagina.url}")
+        print("\n# --- Resumen (Primeras 3 oraciones) ---")
+        
+# # Imprimir el resumen línea por línea para mejor legibilidad
+        resumen_lineas = resumen.split('\n')
+        for linea in resumen_lineas:
+            # # Eliminar referencias o corchetes que a veces quedan en el resumen
+            linea_limpia = re.sub(r'\s*\[.*?\]\s*', '', linea).strip()
+            if linea_limpia:
+                print(f"# {linea_limpia}")
+        
+        print("\n# --------------------------------------------------------------")
+
+# # Manejo de errores comunes
+    except wikipedia.exceptions.PageError:
+        print(f"\n# ¡Error! La página de Wikipedia para '{termino_busqueda}' no existe o no se pudo cargar.")
+    except wikipedia.exceptions.DisambiguationError as e:
+        print(f"\n# ¡Error de Desambiguación! '{termino_busqueda}' podría referirse a varias cosas.")
+        print("# Por favor, sé más específico. Posibles opciones:")
+        for opcion in e.options[:5]: # # Mostrar solo las primeras 5 opciones
+            print(f"# - {opcion}")
+    except Exception as e:
+        print(f"\n# Ocurrió un error inesperado: {e}")
+
+
+# # Bucle principal de la aplicación
+if __name__ == "__main__":
+    
+    print("# Bienvenido al Lector de Wikipedia.")
+    print("# Este script te dará el resumen de cualquier entrada.")
+    
+    while True:
+        try:
+            termino_busqueda = input("\n# Ingresa el tema a buscar (o 'salir' para terminar): ").strip()
+            
+            if termino_busqueda.lower() == 'salir':
+                print("# ¡Adiós! Gracias por usar el Lector de Wikipedia.")
+                break
+            
+            if termino_busqueda:
+                leer_wikipedia(termino_busqueda)
+            else:
+                print("# Por favor, ingresa un término de búsqueda válido.")
+
+        except EOFError:
+            print("\n# ¡Adiós! Gracias por usar el Lector de Wikipedia.")
+            break
+        except KeyboardInterrupt:
+            print("\n# ¡Adiós! Gracias por usar el Lector de Wikipedia.")
+            break
+```
+
