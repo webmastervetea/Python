@@ -1,0 +1,206 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script crea una aplicación de escritorio que permite al usuario seleccionar una carpeta,
+
+# \# y luego renombrar archivos masivamente añadiendo un prefijo o sufijo.
+
+# \# No se requiere la instalación de librerías externas.
+
+```python
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import os
+
+class RenombradorArchivosApp:
+    """
+    Clase que gestiona la interfaz gráfica y la lógica de renombrado masivo de archivos.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la Ventana Principal
+        self.master = master
+        master.title("Renombrador Masivo de Archivos")
+        master.geometry("500x350")
+        master.config(padx=10, pady=10)
+
+        # 2. Variables de Control
+        self.ruta_carpeta = tk.StringVar(value="Seleccione una carpeta...")
+        self.prefijo = tk.StringVar(value="")
+        self.sufijo = tk.StringVar(value="")
+        self.contador_archivos = tk.IntVar(value=0) # Contador de archivos encontrados
+
+        # 3. Construcción de la Interfaz
+        self.crear_widgets()
+
+    def crear_widgets(self):
+        """
+        Crea y coloca todos los widgets de la interfaz.
+        """
+        
+        # --- Frame de Selección de Carpeta ---
+        frame_carpeta = tk.LabelFrame(self.master, text="Ruta de la Carpeta", padx=10, pady=5)
+        frame_carpeta.pack(fill="x", pady=5)
+
+        tk.Entry(frame_carpeta, 
+                 textvariable=self.ruta_carpeta, 
+                 state='readonly', 
+                 width=50).pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 10))
+
+        tk.Button(frame_carpeta, 
+                  text="Seleccionar", 
+                  command=self.seleccionar_carpeta).pack(side=tk.RIGHT)
+
+        # --- Frame de Opciones de Renombrado ---
+        frame_opciones = tk.LabelFrame(self.master, text="Opciones de Renombrado", padx=10, pady=10)
+        frame_opciones.pack(fill="x", pady=10)
+        
+        # Prefijo
+        tk.Label(frame_opciones, text="Añadir Prefijo:").grid(row=0, column=0, sticky="w", pady=5)
+        tk.Entry(frame_opciones, textvariable=self.prefijo, width=30).grid(row=0, column=1, sticky="ew", padx=5)
+
+        # Sufijo
+        tk.Label(frame_opciones, text="Añadir Sufijo (antes de la extensión):").grid(row=1, column=0, sticky="w", pady=5)
+        tk.Entry(frame_opciones, textvariable=self.sufijo, width=30).grid(row=1, column=1, sticky="ew", padx=5)
+
+        # --- Frame de Estado y Botón de Ejecución ---
+        frame_ejecutar = tk.Frame(self.master, padx=10, pady=5)
+        frame_ejecutar.pack(fill="x", pady=10)
+        
+        # Contador de archivos
+        tk.Label(frame_ejecutar, 
+                 textvariable=self.contador_archivos, 
+                 font=('Arial', 10),
+                 fg='blue').pack(side=tk.LEFT)
+        
+        tk.Label(frame_ejecutar, 
+                 text=" archivos encontrados.",
+                 font=('Arial', 10),
+                 fg='blue').pack(side=tk.LEFT)
+
+        # Botón de Ejecución
+        tk.Button(frame_ejecutar, 
+                  text="RENOMBRAR ARCHIVOS", 
+                  command=self.renombrar_archivos,
+                  bg='#F44336', fg='white', 
+                  font=('Arial', 12, 'bold')).pack(side=tk.RIGHT)
+
+
+    def seleccionar_carpeta(self):
+        """
+        Abre el diálogo de selección de carpeta y actualiza la ruta.
+        También cuenta los archivos dentro de la carpeta.
+        """
+        # # Abre el diálogo para seleccionar un directorio
+        ruta = filedialog.askdirectory()
+        if ruta:
+            self.ruta_carpeta.set(ruta)
+            self.contar_archivos_en_carpeta(ruta)
+
+    def contar_archivos_en_carpeta(self, ruta):
+        """
+        Cuenta el número de archivos (no directorios) en la carpeta dada.
+        """
+        try:
+            archivos = [f for f in os.listdir(ruta) if os.path.isfile(os.path.join(ruta, f))]
+            self.contador_archivos.set(len(archivos))
+        except Exception:
+            # # En caso de error de permiso o ruta, se establece a 0
+            self.contador_archivos.set(0)
+
+    def renombrar_archivos(self):
+        """
+        Ejecuta la lógica de renombrado masivo.
+        """
+        ruta = self.ruta_carpeta.get()
+        prefijo = self.prefijo.get().strip()
+        sufijo = self.sufijo.get().strip()
+
+        # 1. Validación inicial
+        if not os.path.isdir(ruta):
+            messagebox.showerror("Error", "Ruta de carpeta no válida o no seleccionada.")
+            return
+
+        if not prefijo and not sufijo:
+            messagebox.showerror("Error", "Debe ingresar un Prefijo o un Sufijo para renombrar.")
+            return
+
+        if self.contador_archivos.get() == 0:
+            messagebox.showwarning("Advertencia", "No se encontraron archivos para renombrar en la carpeta seleccionada.")
+            return
+
+        # 2. Confirmación del usuario (paso crítico)
+        respuesta = messagebox.askyesno(
+            "Confirmar Renombrado",
+            f"¿Está seguro de que desea renombrar {self.contador_archivos.get()} archivos en:\n{ruta}?"
+        )
+
+        if not respuesta:
+            return
+
+        # 3. Lógica de Renombrado
+        archivos_renombrados = 0
+        errores = []
+
+        try:
+            # # Iterar sobre el contenido de la carpeta
+            for nombre_antiguo in os.listdir(ruta):
+                ruta_antigua = os.path.join(ruta, nombre_antiguo)
+                
+                # # Asegurarse de que solo se procesen archivos, no directorios
+                if os.path.isfile(ruta_antigua):
+                    # # Separar el nombre base del archivo y su extensión
+                    nombre_base, extension = os.path.splitext(nombre_antiguo)
+                    
+                    # # Construir el nuevo nombre
+                    # # Formato: [PREFIJO] + [NOMBRE_BASE] + [SUFIJO] + [EXTENSION]
+                    nombre_nuevo = f"{prefijo}{nombre_base}{sufijo}{extension}"
+                    
+                    # # Construir la nueva ruta completa
+                    ruta_nueva = os.path.join(ruta, nombre_nuevo)
+
+                    # # Renombrar el archivo (función de Python OS)
+                    os.rename(ruta_antigua, ruta_nueva)
+                    archivos_renombrados += 1
+
+        except Exception as e:
+            errores.append(f"Fallo al renombrar {nombre_antiguo}: {e}")
+        
+        # 4. Mostrar Resultados
+        if archivos_renombrados > 0:
+            mensaje = f"¡Operación completada!\nSe renombraron {archivos_renombrados} archivos con éxito."
+            messagebox.showinfo("Éxito", mensaje)
+        
+        if errores:
+            messagebox.showwarning("Errores", f"Ocurrieron {len(errores)} errores:\n{errores[0]}...") # Mostrar solo el primer error
+            
+        # # Actualizar el contador después del renombrado
+        self.contar_archivos_en_carpeta(ruta)
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    root = tk.Tk()
+    app = RenombradorArchivosApp(root)
+    print("# Interfaz de Renombrador de Archivos iniciada.")
+    print("# Por favor, selecciona una carpeta y define las opciones de prefijo/sufijo.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `renombrador_gui.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python renombrador_gui.py
+    ```
+3.  **Usa la aplicación:**
+      * **Selecciona la Carpeta:** Haz clic en **"Seleccionar"** y elige la carpeta que contiene los archivos que quieres renombrar. El contador de archivos se actualizará.
+      * **Define Opciones:** Escribe el texto que deseas **añadir al principio** (Prefijo) y/o el texto que deseas **añadir al final** (Sufijo, justo antes de la extensión).
+      * **Renombra:** Haz clic en el botón rojo **"RENOMBRAR ARCHIVOS"**. El programa te pedirá una confirmación antes de realizar los cambios.
+
+# ¡Esta aplicación te proporciona una forma segura e interactiva de realizar renombrados masivos\!
+
+

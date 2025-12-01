@@ -1,0 +1,172 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+
+# Este script utiliza la librería **Tkinter** para la interfaz y el módulo **random** para la generación segura.
+
+# \# Es importante señalar que **guardar contraseñas** de forma verdaderamente segura requeriría
+
+# \# \# el uso de bases de datos cifradas o métodos de cifrado robustos (como AES),
+
+# \# \# lo cual queda fuera del alcance de este script simple. Aquí, solo mostraremos la generación.
+
+```python
+import tkinter as tk
+from tkinter import messagebox
+import random
+import string
+import os
+
+class GeneradorContrasenasApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la lógica del generador de contraseñas.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la ventana principal
+        self.master = master
+        master.title("Generador y Visualizador de Contraseñas")
+        master.geometry("450x300")
+        master.config(padx=10, pady=10)
+
+        # 2. Variables de control
+        self.longitud = tk.IntVar(value=12) # Longitud inicial de 12
+        self.incluir_mayus = tk.BooleanVar(value=True)
+        self.incluir_minus = tk.BooleanVar(value=True)
+        self.incluir_digitos = tk.BooleanVar(value=True)
+        self.incluir_simbolos = tk.BooleanVar(value=False)
+        self.contrasena_generada = tk.StringVar()
+
+        # 3. Configuración de la Interfaz
+        self.crear_widgets()
+
+    def crear_widgets(self):
+        """
+        Crea y coloca todos los widgets de la interfaz.
+        """
+        # --- Frame para las Opciones de Generación ---
+        opciones_frame = tk.LabelFrame(self.master, text="Opciones de Contraseña", padx=10, pady=10)
+        opciones_frame.pack(fill="x", pady=10)
+
+        # Longitud (Label y Scale)
+        tk.Label(opciones_frame, text="Longitud (8-32):").grid(row=0, column=0, sticky="w", pady=2)
+        tk.Scale(opciones_frame, 
+                 from_=8, to=32, 
+                 orient=tk.HORIZONTAL, 
+                 variable=self.longitud).grid(row=0, column=1, columnspan=3, sticky="ew")
+
+        # Checkbuttons de Tipos de Caracteres
+        tk.Checkbutton(opciones_frame, text="Mayúsculas (A-Z)", variable=self.incluir_mayus).grid(row=1, column=0, sticky="w")
+        tk.Checkbutton(opciones_frame, text="Minúsculas (a-z)", variable=self.incluir_minus).grid(row=1, column=1, sticky="w")
+        tk.Checkbutton(opciones_frame, text="Dígitos (0-9)", variable=self.incluir_digitos).grid(row=2, column=0, sticky="w")
+        tk.Checkbutton(opciones_frame, text="Símbolos (!@#$)", variable=self.incluir_simbolos).grid(row=2, column=1, sticky="w")
+
+        # --- Botón de Generar ---
+        tk.Button(self.master, 
+                  text="Generar Contraseña", 
+                  command=self.generar_y_mostrar,
+                  bg='#4CAF50', fg='white', 
+                  font=('Arial', 10, 'bold')).pack(pady=10, fill="x")
+
+        # --- Frame para la Visualización y Acción ---
+        visualizador_frame = tk.LabelFrame(self.master, text="Contraseña Generada", padx=10, pady=10)
+        visualizador_frame.pack(fill="x", pady=10)
+
+        # Pantalla de Contraseña
+        tk.Entry(visualizador_frame, 
+                 textvariable=self.contrasena_generada, 
+                 font=('Courier', 14), 
+                 bd=2, 
+                 relief=tk.SUNKEN, 
+                 state='readonly').grid(row=0, column=0, sticky="ew", padx=5)
+
+        # Botón para Copiar al Portapapeles
+        tk.Button(visualizador_frame, 
+                  text="Copiar", 
+                  command=self.copiar_contrasena).grid(row=0, column=1, padx=5)
+
+        # Ajustar el peso de la columna 0 para que ocupe más espacio
+        visualizador_frame.grid_columnconfigure(0, weight=1)
+
+    def generar_contrasena(self):
+        """
+        Genera una contraseña aleatoria basada en las opciones del usuario.
+        """
+        longitud = self.longitud.get()
+        caracteres = ""
+        
+        # Construir el conjunto de caracteres posibles
+        if self.incluir_mayus.get():
+            caracteres += string.ascii_uppercase
+        if self.incluir_minus.get():
+            caracteres += string.ascii_lowercase
+        if self.incluir_digitos.get():
+            caracteres += string.digits
+        if self.incluir_simbolos.get():
+            caracteres += string.punctuation
+            
+        # Si no se selecciona ningún tipo de carácter
+        if not caracteres:
+            messagebox.showerror("Error", "Debe seleccionar al menos un tipo de carácter.")
+            return ""
+
+        # Generar la contraseña aleatoria
+        # Se usa `random.SystemRandom()` que es criptográficamente más seguro que `random.choice`
+        # # aunque `random.choice` en Python moderno ya es suficientemente seguro.
+        generador_seguro = random.SystemRandom()
+        contrasena = ''.join(generador_seguro.choice(caracteres) for _ in range(longitud))
+        
+        return contrasena
+
+    def generar_y_mostrar(self):
+        """
+        Llama al generador y actualiza la pantalla de la GUI.
+        """
+        nueva_contrasena = self.generar_contrasena()
+        if nueva_contrasena:
+            self.contrasena_generada.set(nueva_contrasena)
+            messagebox.showinfo("Generado", "Contraseña generada con éxito. ¡Cópiala!")
+
+    def copiar_contrasena(self):
+        """
+        Copia la contraseña mostrada al portapapeles del sistema.
+        """
+        contrasena = self.contrasena_generada.get()
+        if contrasena:
+            # # Abrir el portapapeles
+            self.master.clipboard_clear()
+            # # Colocar la contraseña
+            self.master.clipboard_append(contrasena)
+            # # Cerrar el portapapeles (opcional)
+            self.master.update()
+            
+            messagebox.showinfo("Copiado", "Contraseña copiada al portapapeles.")
+        else:
+            messagebox.showwarning("Advertencia", "Primero debes generar una contraseña.")
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    root = tk.Tk()
+    app = GeneradorContrasenasApp(root)
+    print("# Generador de Contraseñas iniciado. Usa la interfaz para crear una contraseña fuerte.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `generador_contrasenas.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python generador_contrasenas.py
+    ```
+3.  **Usa la aplicación:**
+      * **Ajusta las opciones:** Mueve el *slider* para seleccionar la longitud y marca o desmarca las casillas para incluir mayúsculas, minúsculas, dígitos y símbolos.
+      * **Genera:** Haz clic en **"Generar Contraseña"**.
+      * **Visualiza:** La contraseña aparecerá en el cuadro de texto.
+      * **Copia:** Haz clic en **"Copiar"** para guardar la contraseña en el portapapeles.
+
+# Este generador utiliza `random.SystemRandom()`, que es el generador de números pseudoaleatorios criptográficamente más robusto que Python ofrece en su biblioteca estándar, lo que hace que las contraseñas generadas sean seguras.
+

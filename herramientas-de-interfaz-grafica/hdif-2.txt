@@ -1,0 +1,152 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script crea una calculadora básica con botones para números y operaciones
+
+# \# (suma, resta, multiplicación, división). No se requiere instalación de librerías externas.
+
+```python
+import tkinter as tk
+
+class CalculadoraApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la lógica de la calculadora.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la ventana principal
+        self.master = master
+        master.title("Calculadora Simple (Tkinter)")
+        master.resizable(0, 0) # Deshabilita el cambio de tamaño para mantener el diseño
+
+        # 2. Variable y Widget de la Pantalla (Entry)
+        # # `StringVar` se usa para manejar el texto que se muestra en la pantalla
+        self.expresion = tk.StringVar()
+        
+        # # El widget Entry es la pantalla donde se muestran las entradas y resultados
+        self.pantalla = tk.Entry(master, 
+                                 textvariable=self.expresion, 
+                                 bd=5, # Grosor del borde
+                                 relief=tk.SUNKEN, # Estilo del borde
+                                 font=('Arial', 16), 
+                                 justify='right') # Alineación del texto a la derecha
+        
+        # # Colocar la pantalla en la primera fila (row=0), ocupando 4 columnas (columnspan=4)
+        self.pantalla.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+        # 3. Inicializar la expresión (limpiar la pantalla)
+        self.expresion_actual = ""
+        self.expresion.set("")
+
+        # 4. Crear los botones
+        # # Lista de botones a crear. Cada tupla es (texto, fila, columna)
+        botones = [
+            ('7', 1, 0), ('8', 1, 1), ('9', 1, 2), ('/', 1, 3),
+            ('4', 2, 0), ('5', 2, 1), ('6', 2, 2), ('*', 2, 3),
+            ('1', 3, 0), ('2', 3, 1), ('3', 3, 2), ('-', 3, 3),
+            ('0', 4, 0), ('.', 4, 1), ('=', 4, 2), ('+', 4, 3),
+            ('C', 5, 0) # Botón de limpiar
+        ]
+
+        # # Crear y colocar cada botón en la cuadrícula (grid)
+        for (texto, fila, columna) in botones:
+            self.crear_boton(texto, fila, columna)
+
+    def crear_boton(self, texto, fila, columna):
+        """
+        Función auxiliar para crear y colocar un botón.
+        """
+        # # Definir el comando (función) a ejecutar al presionar el botón
+        if texto == 'C':
+            comando = self.limpiar
+        elif texto == '=':
+            comando = self.calcular
+        else:
+            # # Para números y operadores, se llama a `presionar`
+            comando = lambda t=texto: self.presionar(t)
+
+        # # Crear el botón (Button)
+        boton = tk.Button(self.master, 
+                          text=texto, 
+                          padx=20, 
+                          pady=20, 
+                          font=('Arial', 12, 'bold'),
+                          command=comando)
+                          
+        # # Colocar el botón en la cuadrícula
+        # # El botón '=' ocupa dos columnas para un diseño más limpio
+        col_span = 1
+        if texto == '=':
+            col_span = 2
+        
+        boton.grid(row=fila, column=columna, columnspan=col_span, padx=5, pady=5, sticky="nsew")
+
+
+    def presionar(self, tecla):
+        """
+        Maneja la entrada de números y operadores.
+        """
+        # # Añadir la tecla presionada a la expresión actual
+        self.expresion_actual += str(tecla)
+        # # Actualizar la pantalla
+        self.expresion.set(self.expresion_actual)
+
+    def limpiar(self):
+        """
+        Limpia la pantalla y la expresión actual.
+        """
+        self.expresion_actual = ""
+        self.expresion.set("")
+
+    def calcular(self):
+        """
+        Evalúa la expresión actual y muestra el resultado.
+        """
+        try:
+            # # La función `eval()` de Python evalúa la cadena de texto como una expresión matemática.
+            resultado = str(eval(self.expresion_actual))
+            
+            # # Actualizar la expresión actual con el resultado para poder continuar calculando
+            self.expresion_actual = resultado
+            self.expresion.set(resultado)
+
+        except ZeroDivisionError:
+            # # Manejar la división por cero
+            self.expresion_actual = "Error: Div/0"
+            self.expresion.set(self.expresion_actual)
+        except SyntaxError:
+            # # Manejar expresiones mal formadas (ej: "5 + * 6")
+            self.expresion_actual = "Error: Sintaxis"
+            self.expresion.set(self.expresion_actual)
+        except Exception as e:
+            # # Manejar otros errores
+            self.expresion_actual = "Error"
+            self.expresion.set(self.expresion_actual)
+
+
+# --- Bloque Principal de Ejecución ---
+
+# # Se crea la ventana raíz (Root)
+root = tk.Tk()
+
+# # Se instancia la aplicación de la calculadora
+calculadora = CalculadoraApp(root)
+
+print("# Calculadora iniciada. Cerrar la ventana para terminar el programa.")
+
+# # Se inicia el bucle principal de Tkinter, que escucha eventos (clics de ratón, etc.)
+root.mainloop()
+
+# # Nota: El uso de `eval()` es peligroso si se usa con entrada no confiable. 
+# # # Para una calculadora simple, es práctico, pero no para un entorno de producción.
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `calculadora.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python calculadora.py
+    ```
+
+# El script abrirá una ventana de escritorio con la interfaz de la calculadora.
+
+

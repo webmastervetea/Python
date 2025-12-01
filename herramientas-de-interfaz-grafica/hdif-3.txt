@@ -1,0 +1,204 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **Pillow** esté instalada.
+
+# \# Puedes instalarla con `pip install Pillow`.
+
+# \# Tkinter es una librería estándar de Python, por lo que no necesita instalación aparte.
+
+```python
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from PIL import Image, ImageTk
+import os
+
+class VisorDeImagenesApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la lógica del visor de imágenes.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la ventana principal
+        self.master = master
+        master.title("Visor de Imágenes Básico")
+        
+        # 2. Inicialización de variables
+        self.imagen_actual_tk = None # Objeto ImageTk para mostrar
+        self.imagen_actual_pil = None # Objeto Image de Pillow para manipulación
+        
+        # 3. Creación del Canvas (Área de Dibujo)
+        # # El Canvas es el widget donde se mostrará la imagen.
+        self.canvas = tk.Canvas(master, width=800, height=600, bg='lightgray')
+        self.canvas.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+        
+        # 4. Creación de la Etiqueta de Estado
+        # # Muestra la ruta o el estado actual
+        self.etiqueta_estado = tk.Label(master, text="No hay imagen cargada.", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.etiqueta_estado.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # 5. Creación del Menú (Barra superior)
+        self.crear_menu()
+        
+        # 6. Enlazar evento de redimensionamiento (para redimensionar la imagen al cambiar el tamaño de la ventana)
+        self.master.bind('<Configure>', self.redimensionar_imagen)
+
+    def crear_menu(self):
+        """
+        Crea la barra de menú con la opción 'Abrir'.
+        """
+        menu_bar = tk.Menu(self.master)
+        
+        # # Menú Archivo
+        menu_archivo = tk.Menu(menu_bar, tearoff=0)
+        
+        # # Opción "Abrir" que llama a la función `abrir_imagen`
+        menu_archivo.add_command(label="Abrir Imagen...", command=self.abrir_imagen)
+        
+        # # Separador
+        menu_archivo.add_separator()
+        
+        # # Opción "Salir"
+        menu_archivo.add_command(label="Salir", command=self.master.quit)
+        
+        # # Añadir el menú 'Archivo' a la barra de menú
+        menu_bar.add_cascade(label="Archivo", menu=menu_archivo)
+        
+        # # Configurar la barra de menú en la ventana principal
+        self.master.config(menu=menu_bar)
+
+    def abrir_imagen(self):
+        """
+        Abre el cuadro de diálogo para seleccionar una imagen y la carga.
+        """
+        # # Abrir el diálogo para seleccionar archivos
+        ruta_archivo = filedialog.askopenfilename(
+            title="Seleccionar archivo de imagen",
+            filetypes=(
+                ("Archivos de imagen", "*.png *.jpg *.jpeg *.gif *.bmp *.tiff"),
+                ("Todos los archivos", "*.*")
+            )
+        )
+        
+        if ruta_archivo:
+            try:
+                # # Usar Pillow para abrir la imagen
+                self.imagen_actual_pil = Image.open(ruta_archivo)
+                
+                # # Llamar a la función para mostrar la imagen y redimensionarla
+                self.mostrar_imagen()
+                
+                # # Actualizar la etiqueta de estado
+                nombre_archivo = os.path.basename(ruta_archivo)
+                self.etiqueta_estado.config(text=f"Cargado: {nombre_archivo}")
+                
+            except Exception as e:
+                # # Mostrar un mensaje de error si la carga falla
+                messagebox.showerror("Error de Carga", f"No se pudo cargar la imagen: {e}")
+                self.etiqueta_estado.config(text="Error al cargar la imagen.")
+                self.limpiar_visor()
+
+
+    def mostrar_imagen(self):
+        """
+        Muestra la imagen cargada en el canvas, asegurándose de que la imagen se ajuste 
+        a la ventana sin distorsión (llamando a la función de redimensionar).
+        """
+        if self.imagen_actual_pil:
+            # # Borrar cualquier contenido anterior en el canvas
+            self.canvas.delete("all")
+            
+            # # Redimensionar la imagen para que quepa en el canvas actual
+            self.redimensionar_imagen()
+            
+            # # Dibujar la imagen en el centro del canvas
+            if self.imagen_actual_tk:
+                ancho_canvas = self.canvas.winfo_width()
+                alto_canvas = self.canvas.winfo_height()
+                
+                # # Centrar la imagen
+                x_centro = ancho_canvas // 2
+                y_centro = alto_canvas // 2
+                
+                # # Crear el objeto de imagen en el canvas
+                self.canvas.create_image(x_centro, y_centro, image=self.imagen_actual_tk, anchor=tk.CENTER)
+
+
+    def redimensionar_imagen(self, event=None):
+        """
+        Redimensiona la imagen de Pillow para que quepa dentro del Canvas.
+        Esta función se llama cuando se cambia el tamaño de la ventana.
+        """
+        if self.imagen_actual_pil:
+            # # Obtener las dimensiones actuales del canvas
+            ancho_canvas = self.canvas.winfo_width()
+            alto_canvas = self.canvas.winfo_height()
+            
+            # # Obtener las dimensiones originales de la imagen
+            ancho_img_orig, alto_img_orig = self.imagen_actual_pil.size
+            
+            # # Calcular la proporción de escalado
+            if ancho_img_orig > 0 and alto_img_orig > 0:
+                prop_ancho = ancho_canvas / ancho_img_orig
+                prop_alto = alto_canvas / alto_img_orig
+                
+                # # Usar la proporción más pequeña para asegurar que toda la imagen quepa
+                prop_final = min(prop_ancho, prop_alto)
+                
+                # # Si la proporción es muy pequeña (ej. ventana minimizada), usar 1 para evitar errores
+                if prop_final < 0.1: prop_final = 1
+                
+                # # Calcular las nuevas dimensiones
+                nuevo_ancho = int(ancho_img_orig * prop_final)
+                nuevo_alto = int(alto_img_orig * prop_final)
+                
+                # # Redimensionar la imagen de Pillow (Image.LANCZOS es un filtro de alta calidad)
+                imagen_redimensionada = self.imagen_actual_pil.resize((nuevo_ancho, nuevo_alto), Image.Resampling.LANCZOS)
+                
+                # # Convertir la imagen de Pillow a un objeto PhotoImage de Tkinter
+                self.imagen_actual_tk = ImageTk.PhotoImage(imagen_redimensionada)
+                
+                # # Volver a mostrar la imagen redimensionada
+                self.mostrar_imagen()
+
+    def limpiar_visor(self):
+        """
+        Limpia el canvas y resetea las variables de la imagen.
+        """
+        self.canvas.delete("all")
+        self.imagen_actual_pil = None
+        self.imagen_actual_tk = None
+        
+# --- Bloque Principal de Ejecución ---
+
+# # Se crea la ventana raíz (Root)
+root = tk.Tk()
+
+# # Se instancia la aplicación del visor de imágenes
+visor = VisorDeImagenesApp(root)
+
+print("# Visor de imágenes iniciado. Usa 'Archivo -> Abrir Imagen...' para seleccionar un archivo.")
+
+# # Se inicia el bucle principal de Tkinter
+root.mainloop()
+
+# # Nota: El código está diseñado para que la imagen se ajuste automáticamente 
+# # # si cambias el tamaño de la ventana.
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `Pillow`:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install Pillow
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `visor_imagenes.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python visor_imagenes.py
+    ```
+4.  **Usa el visor:**
+      * Haz clic en **Archivo** en la barra de menú.
+      * Selecciona **Abrir Imagen...** y elige un archivo de imagen (`.jpg`, `.png`, etc.) de tu sistema.
+
+# La imagen se cargará y se ajustará automáticamente al tamaño de la ventana.
+
+

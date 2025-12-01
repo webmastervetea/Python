@@ -1,0 +1,225 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+
+# Este script crea una aplicación de escritorio simple para escribir y guardar texto en archivos.
+
+# \# No requiere la instalación de librerías externas.
+
+```python
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+class CuadernoDeNotasApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la funcionalidad del cuaderno de notas.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la ventana principal
+        self.master = master
+        master.title("Cuaderno de Notas Minimalista")
+        
+        # 2. Creación del Text Widget (Área de Edición)
+        # # El Text widget es el área donde el usuario escribe el contenido.
+        self.area_texto = tk.Text(master, 
+                                 wrap='word',       # Asegura que el texto se ajuste a la ventana
+                                 font=('Arial', 12), 
+                                 padx=10, 
+                                 pady=10)
+        
+        # # Usamos 'pack' para colocar el widget, haciéndolo expandible (fill=BOTH, expand=True)
+        self.area_texto.pack(pady=5, padx=5, fill=tk.BOTH, expand=True)
+        
+        # 3. Creación del Menú
+        self.crear_menu()
+        
+        # 4. Inicializar el archivo actual (usado para saber si es un archivo nuevo o existente)
+        self.archivo_actual = None
+        self.texto_sin_guardar = False # Bandera para verificar si hay cambios
+
+        # # Enlazar un evento para detectar cambios en el texto
+        # # # Esto permite saber si el usuario ha modificado el contenido desde el último guardado.
+        self.area_texto.bind("<<Modified>>", self.marcar_modificado)
+
+
+    def crear_menu(self):
+        """
+        Crea la barra de menú con las opciones Archivo (Nuevo, Abrir, Guardar, Guardar como, Salir).
+        """
+        menu_bar = tk.Menu(self.master)
+        
+        # # Menú Archivo
+        menu_archivo = tk.Menu(menu_bar, tearoff=0)
+        
+        # # Opciones del menú Archivo, enlazadas a sus respectivas funciones
+        menu_archivo.add_command(label="Nuevo", command=self.nuevo_archivo)
+        menu_archivo.add_command(label="Abrir...", command=self.abrir_archivo)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Guardar", command=self.guardar_archivo)
+        menu_archivo.add_command(label="Guardar como...", command=self.guardar_archivo_como)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Salir", command=self.salir)
+        
+        # # Añadir el menú 'Archivo' a la barra de menú principal
+        menu_bar.add_cascade(label="Archivo", menu=menu_archivo)
+        
+        # # Configurar la barra de menú en la ventana principal
+        self.master.config(menu=menu_bar)
+
+    def marcar_modificado(self, event=None):
+        """
+        Marca la bandera de texto modificado si hay un cambio en el widget Text.
+        """
+        # # Solo marcamos como modificado si no lo estaba ya.
+        if not self.texto_sin_guardar:
+            self.texto_sin_guardar = True
+            self.actualizar_titulo()
+            
+        # # Resetear la bandera <<Modified>> del widget para detectar el siguiente cambio
+        self.area_texto.edit_modified(False)
+
+    def actualizar_titulo(self):
+        """
+        Actualiza el título de la ventana para reflejar el estado del archivo.
+        """
+        nombre = self.archivo_actual if self.archivo_actual else "Sin título"
+        # # Añade un asterisco (*) si hay cambios sin guardar
+        titulo_estado = "*" if self.texto_sin_guardar else ""
+        self.master.title(f"{titulo_estado}{nombre} - Cuaderno de Notas Minimalista")
+
+    def comprobar_cambios(self):
+        """
+        Verifica si hay cambios sin guardar y le pide confirmación al usuario.
+        :return: True si el usuario quiere continuar (o no hay cambios), False si cancela.
+        """
+        if self.texto_sin_guardar:
+            # # Muestra un cuadro de diálogo de advertencia
+            respuesta = messagebox.askyesnocancel(
+                "Advertencia",
+                "El documento ha sido modificado. ¿Desea guardar los cambios antes de continuar?"
+            )
+            if respuesta is None: # El usuario hizo clic en Cancelar
+                return False
+            elif respuesta is True: # El usuario hizo clic en Sí (Guardar)
+                return self.guardar_archivo() # Retorna el éxito o fracaso de guardar
+            # # Si la respuesta es False (No guardar), simplemente continúa (retorna True)
+        return True
+
+    def nuevo_archivo(self):
+        """
+        Inicia un nuevo archivo de notas después de comprobar si hay cambios.
+        """
+        if self.comprobar_cambios():
+            self.area_texto.delete(1.0, tk.END) # Borra todo el contenido (desde la línea 1, carácter 0 hasta el final)
+            self.archivo_actual = None
+            self.texto_sin_guardar = False
+            self.actualizar_titulo()
+
+    def abrir_archivo(self):
+        """
+        Abre un archivo de texto existente después de comprobar si hay cambios.
+        """
+        if not self.comprobar_cambios():
+            return
+            
+        # # Abrir el diálogo para seleccionar archivos
+        ruta_archivo = filedialog.askopenfilename(
+            defaultextension=".txt",
+            filetypes=[("Archivos de Texto", "*.txt"), ("Todos los archivos", "*.*")]
+        )
+        
+        if ruta_archivo:
+            try:
+                with open(ruta_archivo, "r", encoding="utf-8") as archivo:
+                    contenido = archivo.read()
+                
+                self.area_texto.delete(1.0, tk.END) # Limpiar el área de texto
+                self.area_texto.insert(tk.END, contenido) # Insertar el nuevo contenido
+                
+                self.archivo_actual = ruta_archivo
+                self.texto_sin_guardar = False
+                self.actualizar_titulo()
+                
+            except Exception as e:
+                messagebox.showerror("Error al abrir", f"No se pudo abrir el archivo: {e}")
+
+    def guardar_archivo(self):
+        """
+        Guarda el archivo actual. Si no hay archivo actual, llama a `guardar_archivo_como`.
+        :return: True si se guardó con éxito, False en caso contrario.
+        """
+        if self.archivo_actual:
+            return self._guardar_contenido(self.archivo_actual)
+        else:
+            return self.guardar_archivo_como()
+
+    def guardar_archivo_como(self):
+        """
+        Abre el diálogo 'Guardar como' para que el usuario elija la ruta y nombre.
+        :return: True si se guardó con éxito, False en caso contrario.
+        """
+        # # Abrir el diálogo 'Guardar como'
+        ruta_archivo = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Archivos de Texto", "*.txt"), ("Todos los archivos", "*.*")]
+        )
+        
+        if ruta_archivo:
+            self.archivo_actual = ruta_archivo
+            return self._guardar_contenido(ruta_archivo)
+        
+        return False # No se guardó si el usuario canceló el diálogo
+
+    def _guardar_contenido(self, ruta):
+        """
+        Función auxiliar para escribir el contenido del Text widget al archivo.
+        """
+        try:
+            # # Obtener todo el contenido del widget (desde 1.0 hasta END)
+            contenido = self.area_texto.get(1.0, tk.END)
+            
+            with open(ruta, "w", encoding="utf-8") as archivo:
+                archivo.write(contenido)
+                
+            self.texto_sin_guardar = False
+            self.actualizar_titulo()
+            messagebox.showinfo("Guardado", f"Archivo guardado con éxito en:\n{ruta}")
+            return True
+            
+        except Exception as e:
+            messagebox.showerror("Error al guardar", f"No se pudo guardar el archivo: {e}")
+            return False
+
+    def salir(self):
+        """
+        Cierra la aplicación después de comprobar si hay cambios.
+        """
+        if self.comprobar_cambios():
+            self.master.destroy()
+
+# --- Bloque Principal de Ejecución ---
+
+# # Se crea la ventana raíz (Root)
+root = tk.Tk()
+
+# # Se instancia la aplicación del cuaderno de notas
+cuaderno = CuadernoDeNotasApp(root)
+
+print("# Cuaderno de Notas Minimalista iniciado.")
+print("# Usa el menú 'Archivo' para guardar y abrir documentos.")
+
+# # Se inicia el bucle principal de Tkinter
+root.mainloop()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `cuaderno_notas.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python cuaderno_notas.py
+    ```
+3.  **Usa la aplicación:**
+      * Escribe texto en la ventana.
+      * Ve a **Archivo** y selecciona **Guardar** o **Guardar como...** para guardar tu trabajo en un archivo `.txt`.
+      * Si intentas **Nuevo** o **Salir** con cambios sin guardar, el programa te pedirá confirmación.
+

@@ -1,0 +1,98 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **feedparser** esté instalada.
+
+# \# Puedes instalarla con `pip install feedparser`.
+
+```python
+import feedparser
+import ssl # Necesario para manejar feeds seguros (HTTPS) en algunos entornos
+
+# # Deshabilita la verificación SSL si se encuentra un error de certificado. 
+# # # Esto soluciona un problema común con `feedparser` y ciertos feeds HTTPS.
+# # # ADVERTENCIA: Usar esto reduce la seguridad, pero es común para scripts de prueba.
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+def leer_feed_rss(url_feed):
+    """
+    Lee, analiza y muestra los titulares de un feed RSS dado.
+
+    :param url_feed: La URL del feed RSS o Atom.
+    """
+    print(f"# --- LECTOR DE RSS: {url_feed} ---")
+    
+    # 1. Analizar el feed
+    try:
+        # # `feedparser.parse()` descarga el contenido y lo convierte en un objeto Python
+        feed = feedparser.parse(url_feed)
+    except Exception as e:
+        print(f"Error al analizar el feed o al conectar: {e}")
+        return
+
+    # 2. Comprobar errores en la respuesta
+    # # `feedparser` utiliza el código de estado HTTP para indicar si la solicitud fue exitosa
+    if feed.status != 200:
+        print(f"# ERROR HTTP: No se pudo acceder al feed. Código de estado: {feed.status}")
+        print("# Por favor, verifica que la URL sea correcta y esté activa.")
+        return
+
+    # 3. Mostrar la información general del feed
+    if 'feed' in feed:
+        titulo_feed = feed.feed.get('title', 'Sin Título')
+        enlace_feed = feed.feed.get('link', 'Sin Enlace')
+        print(f"## 📰 Feed: {titulo_feed}")
+        print(f"# Enlace: {enlace_feed}")
+        print("# ----------------------------------------")
+    else:
+        print("# Advertencia: La estructura del feed parece incompleta.")
+        print("# ----------------------------------------")
+
+    # 4. Mostrar los titulares (entradas)
+    entradas = feed.entries
+    if entradas:
+        print(f"## Top {len(entradas)} Titulares Encontrados:")
+        # # Iterar sobre las primeras 10 entradas para no saturar la consola
+        for i, entrada in enumerate(entradas[:10]): 
+            # # Obtener el título, enlace y la fecha (si están disponibles)
+            titulo = entrada.get('title', 'Título Desconocido')
+            enlace = entrada.get('link', '#')
+            fecha = entrada.get('published', entrada.get('updated', 'Fecha Desconocida'))
+            
+            # # Imprimir el titular formateado
+            print(f"#{i+1:02d}. Título: {titulo}")
+            print(f"#    Fecha: {fecha}")
+            print(f"#    Enlace: {enlace}\n")
+    else:
+        print("# El feed no contiene titulares (entradas) o está vacío.")
+        
+    print("# --- LECTURA FINALIZADA ---")
+
+
+# --- Bloque Principal de Ejecución ---
+
+# # Define la URL del feed RSS que deseas leer.
+# # # Ejemplos comunes:
+# # URL_EJEMPLO = "https://www.meneame.net/rss"  # Noticias tecnológicas
+URL_EJEMPLO = "http://feeds.bbci.co.uk/news/world/rss.xml" # Noticias mundiales (BBC, en inglés)
+# # URL_EJEMPLO = "https://www.rtve.es/noticias/rss/actualidad.xml" # Noticias españolas
+
+# # Llamar a la función principal
+leer_feed_rss(URL_EJEMPLO)
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala `feedparser`:** Abre tu terminal y ejecuta:
+    ```bash
+    pip install feedparser
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `lector_rss.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python lector_rss.py
+    ```
+
+# El script imprimirá en la consola el título del *feed*, su enlace y una lista numerada de los primeros titulares, junto con su fecha de publicación y enlace directo.
+
+

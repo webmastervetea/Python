@@ -1,0 +1,82 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+
+# Este script crea una ventana de escritorio minimalista que muestra la hora actual
+
+# \# y se actualiza automáticamente cada segundo.
+
+```python
+import tkinter as tk
+import time
+
+def actualizar_reloj(etiqueta_reloj):
+    """
+    Obtiene la hora actual del sistema y actualiza la etiqueta del reloj.
+    Esta función se llama recursivamente cada 1000 milisegundos (1 segundo).
+
+    :param etiqueta_reloj: El widget Label de Tkinter que muestra la hora.
+    """
+    # 1. Obtener la hora actual del sistema
+    # # `time.strftime` formatea el tiempo actual según el patrón dado.
+    # # # '%H': Hora (24 horas), '%M': Minutos, '%S': Segundos.
+    hora_actual = time.strftime("%H:%M:%S")
+
+    # 2. Actualizar el texto del widget Label
+    etiqueta_reloj.config(text=hora_actual)
+
+    # 3. Programar la próxima actualización
+    # # `after(ms, function)` le dice a Tkinter que llame a la función después de `ms` milisegundos.
+    # # # Esto crea el bucle de actualización en tiempo real.
+    etiqueta_reloj.after(1000, actualizar_reloj, etiqueta_reloj)
+
+
+def main():
+    """
+    Configura la ventana principal y lanza la aplicación del reloj.
+    """
+    # # 1. Crear la ventana raíz (Root)
+    root = tk.Tk()
+    root.title("Reloj Digital")
+    
+    # # Hacer que la ventana se abra con un tamaño inicial adecuado para el reloj
+    root.geometry("400x150")
+    # # Evitar que el usuario pueda redimensionar la ventana para mantener el diseño
+    root.resizable(0, 0) 
+    
+    # # 2. Crear el widget Label para mostrar la hora
+    etiqueta_reloj = tk.Label(root, 
+                              font=('Digital-7', 60, 'bold'), # Fuente grande y audaz
+                              bg='black',                      # Fondo negro (típico de reloj digital)
+                              fg='lime green',                 # Texto verde brillante
+                              bd=10,                           # Borde
+                              relief=tk.SUNKEN)                # Estilo de borde
+    
+    # # Centrar la etiqueta en la ventana
+    etiqueta_reloj.pack(expand=True, fill='both', padx=20, pady=20)
+
+    # # 3. Iniciar la función de actualización
+    actualizar_reloj(etiqueta_reloj)
+
+    # # 4. Iniciar el bucle principal de Tkinter
+    print("# Reloj digital iniciado. Cerrar la ventana para detener el programa.")
+    root.mainloop()
+
+
+# --- Bloque Principal de Ejecución ---
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `reloj_digital.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python reloj_digital.py
+    ```
+
+# El script abrirá una ventana de escritorio que mostrará la hora de tu sistema operativo y se actualizará cada segundo.
+
+# **Nota sobre la Fuente:** La fuente `'Digital-7'` utilizada en el código no es una fuente estándar de Tkinter. Si no la tienes instalada en tu sistema, Tkinter utilizará una fuente de respaldo (como Arial). Si quieres el aspecto clásico de reloj digital, deberás instalar esa fuente manualmente o cambiar el nombre de la fuente en la línea `font=('Digital-7', 60, 'bold')` por otra que sepas que tienes (como `'Arial'` o `'Courier'`).
+
+

@@ -1,0 +1,118 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script crea una aplicación de escritorio simple con un botón que abre el
+
+# \# diálogo de selección de color nativo del sistema operativo y muestra el código hexadecimal.
+
+```python
+import tkinter as tk
+from tkinter import colorchooser
+from tkinter import messagebox
+
+class SelectorColorApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la lógica del selector de color.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la ventana principal
+        self.master = master
+        master.title("Selector de Color Hex")
+        master.geometry("400x250")
+        master.config(bg='#f0f0f0') # Fondo claro para el marco
+        master.resizable(0, 0) # No redimensionable
+
+        # 2. Variable para almacenar el código de color
+        self.codigo_hex_actual = tk.StringVar(value="#f0f0f0") # Inicia con gris claro
+
+        # 3. Widget de la Muestra de Color (Label)
+        # # Este Label cambia de color para reflejar la selección
+        self.muestra_color = tk.Label(master, 
+                                      text="Color Seleccionado", 
+                                      font=('Helvetica', 14, 'bold'),
+                                      fg='black', 
+                                      bg=self.codigo_hex_actual.get(), 
+                                      width=20, 
+                                      height=4,
+                                      relief=tk.SUNKEN,
+                                      bd=3)
+        self.muestra_color.pack(pady=20, padx=20)
+
+        # 4. Widget de la Etiqueta de Código Hexadecimal
+        # # Muestra el código HEX
+        self.etiqueta_hex = tk.Label(master, 
+                                     textvariable=self.codigo_hex_actual, 
+                                     font=('Courier', 16),
+                                     bg='#f0f0f0')
+        self.etiqueta_hex.pack(pady=5)
+
+        # 5. Botón para Abrir el Selector de Color
+        self.boton_seleccionar = tk.Button(master, 
+                                           text="Seleccionar Color", 
+                                           command=self.abrir_selector,
+                                           font=('Helvetica', 12),
+                                           bg='#4CAF50', 
+                                           fg='white', 
+                                           activebackground='#45A049',
+                                           width=18)
+        self.boton_seleccionar.pack(pady=10)
+
+    def abrir_selector(self):
+        """
+        Abre el diálogo de color nativo del sistema y actualiza la GUI con el color elegido.
+        """
+        # # `askcolor` retorna una tupla: 
+        # # # 1. Tupla RGB ((R, G, B))
+        # # # 2. Código Hexadecimal ('#RRGGBB')
+        color_elegido = colorchooser.askcolor(title="Elegir Color")
+
+        # # Si el usuario presiona Cancelar, color_elegido[1] es None
+        if color_elegido and color_elegido[1]:
+            # # Extraer el código hexadecimal
+            hex_code = color_elegido[1]
+            
+            # # 1. Actualizar la variable y la etiqueta de código
+            self.codigo_hex_actual.set(hex_code)
+            
+            # # 2. Actualizar el color de fondo de la muestra
+            self.muestra_color.config(bg=hex_code)
+            
+            # # 3. Ajustar el color de texto de la muestra para mejorar el contraste
+            rgb = color_elegido[0]
+            # # Calcular el brillo percibido (luminosidad relativa) para elegir texto blanco o negro
+            # # # Fórmula estándar de luminosidad: 0.299*R + 0.587*G + 0.114*B
+            if sum(rgb) / 3 < 128: # Si el color es oscuro (promedio de RGB < 128)
+                self.muestra_color.config(fg='white')
+            else: # Si el color es claro
+                self.muestra_color.config(fg='black')
+                
+        else:
+            print("# El usuario canceló la selección de color.")
+
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    root = tk.Tk()
+    app = SelectorColorApp(root)
+    print("# Selector de Color iniciado. Presiona 'Seleccionar Color' para abrir el diálogo.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `selector_color.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python selector_color.py
+    ```
+3.  **Usa la aplicación:**
+      * Haz clic en el botón **"Seleccionar Color"**.
+      * Elige un color en el diálogo que aparece.
+      * La aplicación actualizará el cuadrado de muestra y la etiqueta con el código hexadecimal (`#RRGGBB`) correspondiente.
+
+# Se ha añadido una lógica simple para cambiar el color del texto ("Color Seleccionado") a blanco o negro, dependiendo de si el color de fondo es oscuro o claro, para asegurar una buena legibilidad.
+
+

@@ -1,0 +1,149 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script implementa un cronómetro básico con funciones de Iniciar, Detener y Reiniciar.
+
+# \# Utiliza el método `after()` de Tkinter para lograr la actualización en tiempo real.
+
+```python
+import tkinter as tk
+from datetime import timedelta # Útil para formatear el tiempo
+
+class CronometroApp:
+    """
+    Clase principal que gestiona la interfaz gráfica y la lógica del cronómetro.
+    """
+    def __init__(self, master):
+        # 1. Configuración de la ventana principal
+        self.master = master
+        master.title("Cronómetro Simple")
+        master.geometry("350x200")
+        master.resizable(0, 0) # No redimensionable
+
+        # 2. Variables de estado y tiempo
+        self.en_marcha = False # Bandera para saber si el cronómetro está corriendo
+        self.tiempo_ms = 0     # Tiempo transcurrido en milisegundos
+        self.id_after = None   # ID del evento after para poder cancelarlo
+
+        # 3. Creación del Label (Pantalla)
+        # # Etiqueta grande para mostrar el tiempo
+        self.etiqueta_tiempo = tk.Label(master, 
+                                        text=self.formatear_tiempo(self.tiempo_ms), 
+                                        font=('Helvetica', 40, 'bold'),
+                                        fg='navy')
+        self.etiqueta_tiempo.pack(pady=20)
+
+        # 4. Contenedor de Botones
+        frame_botones = tk.Frame(master)
+        frame_botones.pack(pady=10)
+
+        # 5. Creación de Botones
+        self.boton_iniciar = tk.Button(frame_botones, text="Iniciar", command=self.iniciar, width=10)
+        self.boton_iniciar.pack(side=tk.LEFT, padx=5)
+
+        self.boton_detener = tk.Button(frame_botones, text="Detener", command=self.detener, width=10, state=tk.DISABLED)
+        self.boton_detener.pack(side=tk.LEFT, padx=5)
+
+        self.boton_reiniciar = tk.Button(frame_botones, text="Reiniciar", command=self.reiniciar, width=10)
+        self.boton_reiniciar.pack(side=tk.LEFT, padx=5)
+
+    def formatear_tiempo(self, ms):
+        """
+        Convierte el tiempo en milisegundos a formato HH:MM:SS.ms (Milisegundos).
+        
+        :param ms: Tiempo total en milisegundos.
+        :return: Cadena de tiempo formateada.
+        """
+        # # `timedelta` convierte milisegundos a días, horas, etc.
+        delta = timedelta(milliseconds=ms)
+        
+        # # Extraer segundos y milisegundos
+        segundos_totales = int(delta.total_seconds())
+        milisegundos = delta.microseconds // 1000
+        
+        # # Calcular horas, minutos y segundos
+        horas = segundos_totales // 3600
+        minutos = (segundos_totales % 3600) // 60
+        segundos = segundos_totales % 60
+        
+        # # Formateo final: HH:MM:SS.ms
+        return f"{horas:02d}:{minutos:02d}:{segundos:02d}.{milisegundos:03d}"
+
+    def iniciar(self):
+        """
+        Inicia o reanuda el cronómetro.
+        """
+        if not self.en_marcha:
+            self.en_marcha = True
+            self.actualizar_botones()
+            # # Llamada inicial a la función de bucle
+            self.bucle_actualizacion()
+
+    def detener(self):
+        """
+        Detiene el cronómetro.
+        """
+        if self.en_marcha:
+            self.en_marcha = False
+            self.master.after_cancel(self.id_after) # Cancela el evento after pendiente
+            self.actualizar_botones()
+
+    def reiniciar(self):
+        """
+        Reinicia el cronómetro a cero y lo detiene.
+        """
+        self.detener() # Asegura que el bucle se detenga
+        self.tiempo_ms = 0
+        self.etiqueta_tiempo.config(text=self.formatear_tiempo(self.tiempo_ms))
+        self.actualizar_botones()
+
+    def bucle_actualizacion(self):
+        """
+        El bucle principal que incrementa el tiempo y actualiza la pantalla.
+        """
+        if self.en_marcha:
+            # # Incrementar el tiempo en 10 milisegundos (para mayor precisión visual)
+            self.tiempo_ms += 10 
+            
+            # # Actualizar la pantalla con el nuevo tiempo formateado
+            self.etiqueta_tiempo.config(text=self.formatear_tiempo(self.tiempo_ms))
+            
+            # # Programar la próxima llamada del bucle después de 10 ms
+            self.id_after = self.master.after(10, self.bucle_actualizacion)
+
+    def actualizar_botones(self):
+        """
+        Habilita o deshabilita los botones según el estado del cronómetro.
+        """
+        if self.en_marcha:
+            self.boton_iniciar.config(state=tk.DISABLED)
+            self.boton_detener.config(state=tk.NORMAL)
+        else:
+            self.boton_iniciar.config(state=tk.NORMAL)
+            self.boton_detener.config(state=tk.DISABLED)
+
+# --- Bloque Principal de Ejecución ---
+
+def main():
+    root = tk.Tk()
+    app = CronometroApp(root)
+    print("# Cronómetro iniciado. Usa la interfaz para controlar el tiempo.")
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `cronometro.py`.
+2.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python cronometro.py
+    ```
+3.  **Usa la aplicación:**
+      * Haz clic en **Iniciar** para comenzar a medir el tiempo.
+      * Haz clic en **Detener** para pausar.
+      * Haz clic en **Reiniciar** para poner el contador a cero.
+
+# El cronómetro mostrará el tiempo con una precisión de milisegundos.
+
