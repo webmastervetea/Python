@@ -1,0 +1,95 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+# 🐍 Aplicación de Calculadora de IMC
+
+def calcular_imc(peso_kg, altura_m):
+    """
+    Calcula el Índice de Masa Corporal (IMC) usando la fórmula:
+    IMC = peso (kg) / altura^2 (m^2)
+
+    Args:
+        peso_kg (float): Peso en kilogramos.
+        altura_m (float): Altura en metros.
+
+    Returns:
+        float: El valor del Índice de Masa Corporal.
+    """
+    # 1. Validación de entradas
+    if peso_kg <= 0 or altura_m <= 0:
+        raise ValueError("El peso y la altura deben ser valores positivos.")
+    
+    # 2. Cálculo del IMC
+    # La doble multiplicación (**) es el operador de potencia en Python
+    imc = peso_kg / (altura_m ** 2)
+    return imc
+
+def clasificar_imc(imc):
+    """
+    Clasifica el resultado del IMC según las categorías estándar de la OMS.
+
+    Args:
+        imc (float): El valor del IMC calculado.
+
+    Returns:
+        str: La categoría de clasificación del IMC.
+    """
+    if imc < 18.5:
+        return "Bajo peso"
+    elif imc < 25.0:
+        return "Peso normal (Saludable)"
+    elif imc < 30.0:
+        return "Sobrepeso"
+    else:
+        return "Obesidad"
+
+def interfaz_imc():
+    """
+    Función principal para interactuar con el usuario y mostrar el resultado.
+    """
+    print("--- 🩺 Calculadora de Índice de Masa Corporal (IMC) ---")
+    print("Por favor, introduce tus datos:")
+    
+    try:
+        # 1. Pedir la altura al usuario y convertirla a metros
+        altura_cm = float(input("Altura en centímetros (ej. 175): "))
+        altura_m = altura_cm / 100 # Convertir cm a metros
+        
+        # 2. Pedir el peso al usuario
+        peso_kg = float(input("Peso en kilogramos (ej. 70.5): "))
+        
+        # 3. Calcular el IMC
+        imc_calculado = calcular_imc(peso_kg, altura_m)
+        
+        # 4. Clasificar el resultado
+        clasificacion = clasificar_imc(imc_calculado)
+        
+        # 5. Mostrar los resultados
+        print("\n--- Resultados ---")
+        print(f"Altura introducida: {altura_cm:.1f} cm ({altura_m:.2f} m)")
+        print(f"Peso introducido: {peso_kg:.1f} kg")
+        print(f"Tu IMC es: **{imc_calculado:.2f}**")
+        print(f"Clasificación: **{clasificacion}**")
+
+    except ValueError as e:
+        print(f"\n¡Error en la entrada! {e}")
+        print("Asegúrate de introducir números válidos para peso y altura.")
+    except Exception as e:
+        print(f"\nHa ocurrido un error inesperado: {e}")
+
+# Ejecutar la aplicación
+if __name__ == "__main__":
+    interfaz_imc()
+
+"""
+### 💡 Funcionamiento Clave
+
+1.  **Fórmula Matemática**: El núcleo de la aplicación está en la función `calcular_imc`, que implementa la fórmula:
+    $$IMC = \frac{Peso\ (kg)}{Altura^2\ (m^2)}$$
+    En Python, esto se escribe como `imc = peso_kg / (altura_m ** 2)`.
+
+2.  **Conversión de Unidades**: Es crucial que la altura se mida en **metros** para la fórmula estándar. La aplicación pide la altura en **centímetros** (más común para el usuario) y luego la convierte dividiendo por 100: `altura_m = altura_cm / 100`.
+
+3.  **Clasificación**: La función `clasificar_imc` toma el número y lo compara con los **umbrales estándar** de la Organización Mundial de la Salud (OMS) para asignar una categoría de salud.
+
+"""
+
+

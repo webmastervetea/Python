@@ -1,0 +1,124 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que las librerías **NumPy** y **Matplotlib** estén instaladas.
+
+# \# Puedes instalarlas con `pip install numpy matplotlib`.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+
+def generar_caminata_aleatoria(pasos):
+    """
+    Genera las coordenadas (x, y) para una caminata aleatoria en 2D.
+
+    La caminata empieza en (0, 0). En cada paso, el movimiento puede ser:
+    (1, 0), (-1, 0), (0, 1), o (0, -1).
+
+    :param pasos: El número de pasos en la caminata.
+    :return: Dos arrays de NumPy: coords_x y coords_y.
+    """
+    # Inicializar arrays para almacenar los cambios de posición (delta_x y delta_y)
+    # # La dimensión es igual al número de pasos.
+    delta_x = np.zeros(pasos)
+    delta_y = np.zeros(pasos)
+
+    # # Las posibles direcciones de movimiento son 4: Norte, Sur, Este, Oeste.
+    direcciones = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+    # # Generar los pasos aleatorios
+    for i in range(pasos):
+        # # Seleccionar una dirección aleatoria de la lista de direcciones
+        dx, dy = random.choice(direcciones)
+        delta_x[i] = dx
+        delta_y[i] = dy
+
+    # # Calcular la posición acumulada sumando los deltas. 
+    # # # `np.cumsum` calcula la suma acumulativa de los elementos del array.
+    # # # Se añade un punto inicial (0, 0) al principio de la caminata.
+    coords_x = np.concatenate([[0], np.cumsum(delta_x)])
+    coords_y = np.concatenate([[0], np.cumsum(delta_y)])
+    
+    # # Retorna las coordenadas de la caminata, incluyendo el punto de partida (0, 0).
+    return coords_x, coords_y
+
+def visualizar_caminata_aleatoria(coords_x, coords_y):
+    """
+    Crea un gráfico que visualiza la caminata aleatoria generada.
+
+    :param coords_x: Array de coordenadas x.
+    :param coords_y: Array de coordenadas y.
+    """
+    # 1. Configuración del gráfico
+    plt.figure(figsize=(10, 8)) # Define el tamaño de la figura (ancho, alto)
+    
+    # 2. Dibujar la caminata
+    # # `plt.plot` dibuja las líneas conectando todos los puntos (x, y).
+    plt.plot(coords_x, coords_y, 
+             marker='.',       # Muestra un punto en cada posición
+             markersize=3,     # Tamaño pequeño para el punto
+             linestyle='-',    # Línea continua
+             linewidth=0.5,    # Grosor de la línea
+             alpha=0.7)        # Transparencia
+
+    # 3. Marcar los puntos clave
+    # # Punto de inicio (Start)
+    plt.plot(coords_x[0], coords_y[0], 'go', # 'go' = green circle
+             markersize=8, 
+             label='Inicio (0, 0)')
+             
+    # # Punto final (End)
+    plt.plt(coords_x[-1], coords_y[-1], 'ro', # 'ro' = red circle
+             markersize=8, 
+             label=f'Fin ({coords_x[-1]}, {coords_y[-1]})')
+
+    # 4. Etiquetas y Títulos
+    plt.title(f"Simulación de Caminata Aleatoria en 2D ({len(coords_x) - 1} Pasos)", fontsize=16)
+    plt.xlabel("Posición X", fontsize=12)
+    plt.ylabel("Posición Y", fontsize=12)
+    
+    # 5. Configuración de la cuadrícula y leyenda
+    plt.grid(True, linestyle='--', alpha=0.6) # Añade una cuadrícula
+    plt.legend(loc='best') # Muestra la leyenda en la mejor posición
+    plt.gca().set_aspect('equal', adjustable='box') # Fuerza que los ejes tengan la misma escala
+
+    # 6. Mostrar el gráfico
+    plt.show()
+
+# --- Bloque Principal de Ejecución ---
+
+# # Define el número de pasos para la simulación (cambia este valor para mayor complejidad)
+NUMERO_DE_PASOS = 5000
+
+print("# --- SIMULADOR DE CAMINATA ALEATORIA ---")
+print(f"# Generando una caminata de {NUMERO_DE_PASOS} pasos...")
+
+# # 1. Generar los datos
+x, y = generar_caminata_aleatoria(NUMERO_DE_PASOS)
+
+# # 2. Visualizar los datos
+print("# Visualizando el camino...")
+visualizar_caminata_aleatoria(x, y)
+
+print("# Simulación completada.")
+print("# ---------------------------------------")
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala las librerías necesarias:** Abre tu terminal o línea de comandos y ejecuta:
+    ```bash
+    pip install numpy matplotlib
+    ```
+2.  **Guarda el código:** Guarda el código anterior en un archivo, por ejemplo, `random_walk.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python random_walk.py
+    ```
+
+# El script abrirá una nueva ventana con el gráfico de la caminata aleatoria. El camino siempre será diferente debido al uso de `random.choice`.
+
+¿Te gustaría que **modificara el código** para utilizar la **Criba de Eratóstenes** (como mencionamos antes) o que lo **cambiara para una caminata aleatoria en 3D**?
+
+

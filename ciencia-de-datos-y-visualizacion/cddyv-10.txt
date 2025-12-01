@@ -1,0 +1,98 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# La búsqueda binaria es un algoritmo eficiente para encontrar un elemento en una lista **ordenada**.
+
+# \# Su eficiencia se debe a que divide repetidamente a la mitad la porción de la lista donde podría estar el elemento.
+
+# \# La complejidad de tiempo de la búsqueda binaria es $O(\log n)$, lo cual es mucho más rápido que la búsqueda lineal $O(n)$ para listas grandes.
+
+```python
+def busqueda_binaria(lista_ordenada, objetivo):
+    """
+    Implementa el algoritmo de búsqueda binaria.
+
+    Asume que la lista de entrada está ordenada de forma ascendente.
+
+    :param lista_ordenada: La lista ordenada donde se realizará la búsqueda.
+    :param objetivo: El valor que se está buscando.
+    :return: El índice del objetivo en la lista si se encuentra, o -1 si no se encuentra.
+    """
+    # 1. Inicializar los punteros de los límites del rango de búsqueda
+    # # `izquierda` apunta al inicio de la lista (índice 0)
+    izquierda = 0
+    # # `derecha` apunta al final de la lista (último índice)
+    derecha = len(lista_ordenada) - 1
+
+    # 2. Ciclo principal de búsqueda
+    # # El ciclo continúa mientras el rango de búsqueda sea válido (izquierda <= derecha)
+    while izquierda <= derecha:
+        # # Calcular el índice del medio.
+        # # Se usa la fórmula `(izquierda + derecha) // 2` para asegurar que el resultado sea un entero (división entera).
+        # # También es una forma segura de evitar desbordamientos de enteros en otros lenguajes.
+        medio = (izquierda + derecha) // 2
+
+        # # Obtener el valor en el punto medio
+        valor_medio = lista_ordenada[medio]
+
+        # 3. Comparación con el objetivo
+        if valor_medio == objetivo:
+            # # ¡Elemento encontrado! Devolver el índice.
+            return medio
+        elif valor_medio < objetivo:
+            # # El objetivo es MAYOR que el valor del medio.
+            # # Esto significa que el objetivo solo puede estar en la mitad DERECHA de la lista.
+            # # Mover el puntero izquierdo a `medio + 1` para buscar en la mitad superior.
+            izquierda = medio + 1
+        else: # valor_medio > objetivo
+            # # El objetivo es MENOR que el valor del medio.
+            # # El objetivo solo puede estar en la mitad IZQUIERDA de la lista.
+            # # Mover el puntero derecho a `medio - 1` para buscar en la mitad inferior.
+            derecha = medio - 1
+
+    # 4. Finalización del ciclo
+    # # Si el ciclo termina sin encontrar el elemento, significa que el objetivo no está en la lista.
+    return -1
+
+# --- Bloque Principal de Ejecución ---
+
+# # Ejemplo de lista de entrada (¡DEBE ESTAR ORDENADA!)
+MI_LISTA = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+
+# # Definir el elemento que queremos buscar
+OBJETIVO_1 = 23 # Un elemento que sí está en la lista
+OBJETIVO_2 = 42 # Un elemento que NO está en la lista
+
+print("# --- ALGORITMO DE BÚSQUEDA BINARIA ---")
+print(f"# Lista: {MI_LISTA}")
+
+# # Búsqueda 1: Elemento presente
+indice_1 = busqueda_binaria(MI_LISTA, OBJETIVO_1)
+
+if indice_1 != -1:
+    print(f"\n# Búsqueda de {OBJETIVO_1}: ¡Encontrado!")
+    print(f"# El elemento está en el índice: {indice_1}")
+else:
+    print(f"\n# Búsqueda de {OBJETIVO_1}: No encontrado.")
+
+# # Búsqueda 2: Elemento ausente
+indice_2 = busqueda_binaria(MI_LISTA, OBJETIVO_2)
+
+if indice_2 != -1:
+    print(f"\n# Búsqueda de {OBJETIVO_2}: ¡Encontrado!")
+    print(f"# El elemento está en el índice: {indice_2}")
+else:
+    print(f"\n# Búsqueda de {OBJETIVO_2}: No encontrado.")
+
+print("# ----------------------------------------")
+```
+
+## 📝 Concepto Clave de la Búsqueda Binaria
+
+# La **Búsqueda Binaria** se basa en tres pasos fundamentales que se repiten en cada iteración:
+
+# 1\. **Punto Medio:** Se encuentra el índice del elemento central del subarreglo actual.
+
+# 2\. **Comparación:** Se compara el elemento central con el objetivo.
+
+# 3\. **Reducción:** Si no son iguales, se descarta el 50% de la lista donde el objetivo no puede estar, moviendo el puntero `izquierda` o `derecha`.
+

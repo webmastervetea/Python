@@ -1,0 +1,111 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+### 🐍 Aplicación de Análisis de Sentimiento con `TextBlob`
+
+Aquí tienes el código de la aplicación:
+
+```python
+from textblob import TextBlob
+
+def analizar_sentimiento(texto):
+    """
+    Analiza el sentimiento de una cadena de texto y la clasifica
+    como Positivo, Negativo o Neutro.
+
+    Args:
+        texto (str): La frase o texto a analizar.
+
+    Returns:
+        str: El resultado de la clasificación del sentimiento.
+    """
+    # 1. Crear un objeto TextBlob
+    blob = TextBlob(texto)
+
+    # Nota: TextBlob realiza el análisis de sentimiento en inglés de forma nativa.
+    # Para trabajar con español, primero debemos traducirlo.
+    try:
+        # 2. Intentar la traducción a inglés (si el idioma original no es inglés)
+        # TextBlob intenta detectar el idioma. Si no es 'en', lo traduce.
+        if blob.detect_language() != 'en':
+             blob = blob.translate(to='en')
+        
+    except Exception as e:
+        # En caso de error de detección/traducción, usamos el texto original
+        # y emitimos una advertencia si el idioma no es inglés.
+        print(f"Advertencia: Error en la traducción ({e}). Analizando el texto original.")
+        # El análisis funcionará para frases simples en español, pero es menos preciso.
+
+    # 3. Obtener la Polaridad del sentimiento
+    # La polaridad es un valor flotante en el rango [-1.0, 1.0].
+    # -1.0 es completamente negativo, +1.0 es completamente positivo.
+    polaridad = blob.sentiment.polarity
+    
+    # 4. Clasificar el sentimiento basado en la polaridad
+    if polaridad > 0.1:
+        sentimiento = "Positivo"
+    elif polaridad < -0.1:
+        sentimiento = "Negativo"
+    else:
+        sentimiento = "Neutro"
+        
+    # 5. Devolver el resultado
+    return f"Texto: '{texto}'\nPolaridad: {polaridad:.2f}\nSentimiento: **{sentimiento}**"
+
+# --- Ejemplos de uso ---
+if __name__ == "__main__":
+    print("--- Analizador de Sentimiento ---")
+    print("-" * 35)
+
+    frase1 = "Me encanta esta aplicación, es fantástica y muy útil."
+    print(analizar_sentimiento(frase1))
+    
+    print("-" * 35)
+    
+    frase2 = "La película fue aburrida y terrible. Una pérdida de tiempo."
+    print(analizar_sentimiento(frase2))
+    
+    print("-" * 35)
+    
+    frase3 = "El cielo es azul y el coche es rojo. Hechos simples."
+    print(analizar_sentimiento(frase3))
+
+    print("-" * 35)
+
+    frase4 = "I love this product, it's amazing!"
+    print(analizar_sentimiento(frase4))
+```
+
+-----
+
+### 📋 **Requisitos y Explicación**
+
+#### 1\. Instalación de Librerías
+
+Antes de ejecutar el código, debes instalar `TextBlob` y sus datos necesarios. También necesitamos la biblioteca de traducción si queremos que maneje texto en español (u otros idiomas) de forma más precisa.
+
+```bash
+pip install textblob
+# Para la funcionalidad de traducción y otros modelos:
+python -m textblob.download_corpora
+pip install googletrans==3.1.0a0
+```
+
+#### 2\. Funcionamiento de `TextBlob`
+
+  * **`TextBlob(texto)`**: Crea un objeto `TextBlob` que envuelve el texto, dándole acceso a varias propiedades de NLP.
+  * **Detección y Traducción (Para Español)**: Por defecto, `TextBlob` entrena sus modelos de sentimiento en inglés. Para analizar texto en español, la estrategia es:
+    1.  Detectar el idioma original (`blob.detect_language()`).
+    2.  Si no es inglés (`'en'`), traducirlo a inglés (`blob.translate(to='en')`).
+  * **`blob.sentiment.polarity`**: Es el valor clave. Representa la fuerza emocional del texto:
+      * **$1.0$**: Máximo sentimiento positivo.
+      * **$-1.0$**: Máximo sentimiento negativo.
+      * **$0.0$**: Sentimiento neutro.
+
+#### 3\. Clasificación
+
+En el código, he usado umbrales de $\pm 0.1$ para clasificar el sentimiento, ya que una polaridad de $0.00$ a $\pm 0.10$ se considera generalmente neutral en la práctica:
+
+  * **Positivo:** Si $Polaridad > 0.1$
+  * **Negativo:** Si $Polaridad < -0.1$
+  * **Neutro:** Si $-0.1 \le Polaridad \le 0.1$
+
+

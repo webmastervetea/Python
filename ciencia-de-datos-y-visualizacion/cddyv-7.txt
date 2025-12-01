@@ -1,0 +1,109 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza la función matemática de **prueba de divisibilidad** para verificar si un número es primo.
+
+# \# Un número primo ($p$) es un número natural mayor que 1 que tiene exactamente dos divisores positivos distintos: 1 y él mismo.
+
+# \# La prueba de divisibilidad solo necesita verificar divisores hasta la raíz cuadrada ($\sqrt{p}$) del número.
+
+```python
+import math
+
+def es_primo(numero):
+    """
+    Verifica si un número entero es primo.
+    
+    :param numero: El número a verificar.
+    :return: True si es primo, False si no lo es.
+    """
+    # 0 y 1 no son primos por definición
+    if numero <= 1:
+        return False
+    
+    # 2 y 3 son primos
+    if numero <= 3:
+        return True
+        
+    # Un optimización: los números mayores que 3 pueden expresarse como 6k ± 1.
+    # # Si el número es divisible por 2 o por 3, no es primo.
+    if numero % 2 == 0 or numero % 3 == 0:
+        return False
+        
+    # La verificación solo necesita ir hasta la raíz cuadrada del número.
+    # # Usamos `int(math.sqrt(numero))` para el límite superior.
+    i = 5
+    while i * i <= numero:
+        # # Verificamos si es divisible por i o i + 2
+        # # Esto cubre todos los divisores primos restantes (6k ± 1)
+        if numero % i == 0 or numero % (i + 2) == 0:
+            return False
+        i += 6 # Saltar al siguiente potencial divisor (6k + 5)
+        
+    return True
+
+def generar_primos_hasta_n(limite_n):
+    """
+    Genera una lista de todos los números primos hasta un límite N (inclusive).
+
+    :param limite_n: El número entero máximo a considerar.
+    :return: Una lista de números primos.
+    """
+    # Manejo de entrada inválida
+    if not isinstance(limite_n, int) or limite_n < 2:
+        return []
+
+    # Lista donde se almacenarán los números primos encontrados
+    primos_encontrados = []
+    
+    # Itera desde 2 hasta el límite N (incluido)
+    for numero in range(2, limite_n + 1):
+        # # Llama a la función auxiliar para verificar si es primo
+        if es_primo(numero):
+            primos_encontrados.append(numero)
+            
+    return primos_encontrados
+
+# --- Bloque Principal de Ejecución ---
+
+# # 1. Define el límite N (cambia este valor para probar diferentes rangos)
+LIMITE_N = 100
+
+print("# --- GENERADOR DE NÚMEROS PRIMOS ---")
+print(f"# Objetivo: Listar los números primos hasta {LIMITE_N}")
+
+# # 2. Llama a la función principal para obtener la lista de primos
+lista_de_primos = generar_primos_hasta_n(LIMITE_N)
+
+# # 3. Muestra los resultados
+if lista_de_primos:
+    print(f"\n# Se encontraron {len(lista_de_primos)} números primos.")
+    print("# Lista de números primos:")
+    
+    # # Imprime la lista de una forma legible, agrupando los números
+    # # # Se usa una comprensión de lista para convertir los números a string para la impresión
+    primos_str = [str(p) for p in lista_de_primos]
+    # # Une los strings con coma y espacio
+    print("# " + ", ".join(primos_str))
+    
+else:
+    print("# No se encontraron números primos en el rango especificado.")
+    
+print("# -----------------------------------")
+```
+
+## 📝 Ejemplo de Salida para $N=100$
+
+# La ejecución del script con `LIMITE_N = 100` producirá la siguiente lista:
+
+# Lista de números primos:
+
+# 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+
+-----
+
+## 💡 Opción de Rendimiento
+
+# Para límites $N$ muy grandes (por ejemplo, $N > 10000$), la función `generar_primos_hasta_n` es **ineficiente**.
+
+# \# Una técnica mucho más rápida y recomendada para generar listas grandes de primos es la **Criba de Eratóstenes**.
+

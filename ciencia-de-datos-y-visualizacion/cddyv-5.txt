@@ -1,0 +1,144 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# El programa utiliza los módulos estándar de Python, `csv` y `json`,
+
+# \# lo que lo hace muy eficiente para esta tarea.
+
+```python
+import csv
+import json
+import os # Necesario para verificar si el archivo de salida ya existe
+
+def convertir_csv_a_json(nombre_archivo_csv, nombre_archivo_json):
+    """
+    Convierte datos de un archivo CSV a un archivo JSON.
+
+    Cada fila del CSV (excepto el encabezado) se convierte en un objeto JSON,
+    utilizando los nombres de las columnas como claves.
+
+    :param nombre_archivo_csv: La ruta del archivo CSV de entrada.
+    :param nombre_archivo_json: La ruta donde se guardará el archivo JSON de salida.
+    :return: True si la conversión fue exitosa, False en caso contrario.
+    """
+    # Lista para almacenar todos los objetos (filas) del CSV
+    datos = []
+
+    # Manejo de errores para la lectura del archivo CSV
+    try:
+        # Abre el archivo CSV en modo lectura ('r')
+        # Se usa `encoding='utf-8'` para manejar caracteres especiales.
+        with open(nombre_archivo_csv, mode='r', encoding='utf-8') as archivo_csv:
+            # `csv.DictReader` lee el archivo CSV y trata cada fila como un diccionario.
+            # # Las claves del diccionario son los nombres de las columnas de la primera fila (encabezado).
+            lector_csv = csv.DictReader(archivo_csv)
+
+            # Iterar sobre cada fila (diccionario) que devuelve el lector
+            for fila in lector_csv:
+                # Añadir la fila/diccionario a la lista `datos`
+                datos.append(fila)
+
+    except FileNotFoundError:
+        # Mensaje si el archivo CSV no se encuentra
+        print(f"Error: El archivo de entrada CSV '{nombre_archivo_csv}' no fue encontrado.")
+        return False
+    except Exception as e:
+        # Mensaje para otros errores de lectura
+        print(f"Error al leer el archivo CSV: {e}")
+        return False
+
+    # Si la lista de datos está vacía, no hay nada que convertir
+    if not datos:
+        print("# Advertencia: El archivo CSV se leyó, pero no contenía datos para convertir (posiblemente solo el encabezado).")
+        return True # Consideramos que se procesó correctamente, aunque vacío.
+
+    # --- Escritura del archivo JSON ---
+
+    # Manejo de errores para la escritura del archivo JSON
+    try:
+        # Abre el archivo JSON en modo escritura ('w')
+        with open(nombre_archivo_json, mode='w', encoding='utf-8') as archivo_json:
+            # Usa `json.dump` para escribir la lista de diccionarios al archivo JSON.
+            # `indent=4` hace que el JSON sea legible por humanos con una indentación de 4 espacios.
+            # `ensure_ascii=False` asegura que los caracteres como 'ñ' o tildes se escriban correctamente.
+            json.dump(datos, archivo_json, indent=4, ensure_ascii=False)
+
+        # Mensaje de éxito
+        print(f"\n# Conversión exitosa.")
+        print(f"# Los datos se han guardado en: {nombre_archivo_json}")
+        return True
+
+    except Exception as e:
+        # Mensaje para errores de escritura
+        print(f"Error al escribir el archivo JSON: {e}")
+        return False
+
+# --- Bloque Principal de Ejecución ---
+
+# # 1. Define los nombres de los archivos
+nombre_csv_entrada = "datos.csv"
+nombre_json_salida = "datos_convertidos.json"
+
+# # 2. Llama a la función de conversión
+print(f"# Intentando convertir '{nombre_csv_entrada}' a '{nombre_json_salida}'...")
+convertido = convertir_csv_a_json(nombre_csv_entrada, nombre_json_salida)
+
+# # 3. Muestra el resultado final
+if convertido:
+    print("# Proceso completado.")
+else:
+    print("# El proceso de conversión falló.")
+
+```
+
+## 📝 Instrucciones y Ejemplo de Uso
+
+# Para que el programa funcione, necesitas crear un archivo CSV de ejemplo en la misma carpeta donde guardaste el script de Python.
+
+1.  **Guarda el código:** Guarda el código anterior en un archivo llamado, por ejemplo, `convertidor.py`.
+
+2.  **Crea el archivo CSV:** En la **misma carpeta** que `convertidor.py`, crea un archivo de texto y nómbralo `datos.csv` (el nombre predeterminado).
+
+3.  **Añade datos CSV:** Escribe o pega los siguientes datos en `datos.csv`:
+
+    ```csv
+    ID,Nombre,País,Edad
+    1,Ana García,España,30
+    2,João Silva,Portugal,25
+    3,Chen Wei,China,45
+    ```
+
+4.  **Ejecuta:** Abre tu terminal o línea de comandos, navega hasta la carpeta donde guardaste los archivos y ejecuta el script con:
+
+    ```bash
+    python convertidor.py
+    ```
+
+# **Resultado:**
+
+# El script generará un nuevo archivo llamado `datos_convertidos.json` en la misma carpeta, con el siguiente contenido:
+
+```json
+[
+    {
+        "ID": "1",
+        "Nombre": "Ana García",
+        "País": "España",
+        "Edad": "30"
+    },
+    {
+        "ID": "2",
+        "Nombre": "João Silva",
+        "País": "Portugal",
+        "Edad": "25"
+    },
+    {
+        "ID": "3",
+        "Nombre": "Chen Wei",
+        "País": "China",
+        "Edad": "45"
+    }
+]
+```
+
+# Como puedes ver, se convierte en una lista (`[]`) de objetos (`{}`) JSON.
+

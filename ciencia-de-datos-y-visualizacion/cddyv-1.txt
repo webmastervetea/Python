@@ -1,0 +1,49 @@
+"""
+Soporte: https://www.linkedin.com/in/oscarlizarragag/
+Este ejemplo utiliza una lista de categorías y sus valores correspondientes para generar la visualización.
+🐍 Aplicación de Gráfico de Barras Simple
+"""
+import matplotlib.pyplot as plt
+
+def crear_grafico_barras_simple():
+    """
+    Crea y muestra un gráfico de barras simple usando matplotlib.
+    """
+    # --- 1. Datos para el gráfico ---
+    # Categorías (ej. productos, meses, personas)
+    categorias = ['A', 'B', 'C', 'D', 'E']
+    # Valores correspondientes a cada categoría
+    valores = [23, 45, 55, 12, 80]
+
+    # --- 2. Crear el gráfico de barras ---
+    # plt.bar() genera el gráfico de barras.
+    plt.figure(figsize=(8, 6)) # Opcional: define el tamaño de la figura
+    plt.bar(categorias, valores, color='skyblue') # Puedes cambiar el color
+
+    # --- 3. Personalización del gráfico ---
+    plt.xlabel('Categorías') # Etiqueta del eje X
+    plt.ylabel('Valores')    # Etiqueta del eje Y
+    plt.title('Gráfico de Barras Simple de Datos de Muestra') # Título del gráfico
+    plt.grid(axis='y', linestyle='--', alpha=0.7) # Opcional: añade líneas de cuadrícula en el eje Y
+
+    # --- 4. Mostrar el gráfico ---
+    plt.show()
+
+# Ejecutar la función
+if __name__ == "__main__":
+    # Asegúrate de tener matplotlib instalado (pip install matplotlib)
+    crear_grafico_barras_simple()
+"""
+📝 Explicación del Código
+import matplotlib.pyplot as plt: Importa la interfaz de trazado (plotting) de matplotlib, que se usa comúnmente como plt.
+
+categorias y valores: Son las dos listas que contienen los datos. plt.bar() toma el primer argumento (eje X) como las etiquetas y el segundo (eje Y) como las alturas de las barras.
+
+plt.figure(figsize=(8, 6)): Crea una nueva figura para el gráfico y establece su tamaño. Esto es opcional, pero ayuda a controlar la presentación.
+
+plt.bar(categorias, valores, color='skyblue'): Esta es la función central que dibuja las barras.
+
+plt.xlabel(...), plt.ylabel(...), plt.title(...): Funciones para añadir etiquetas descriptivas a los ejes y un título al gráfico, haciéndolo comprensible.
+
+plt.show(): Muestra la ventana del gráfico. Sin esta línea, el gráfico se crearía internamente, pero no se mostraría al usuario.
+"""

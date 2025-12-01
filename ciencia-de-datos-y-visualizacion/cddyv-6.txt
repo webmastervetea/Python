@@ -1,0 +1,135 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script requiere que la librería **Pandas** esté instalada.
+
+# \# Puedes instalarla con `pip install pandas`.
+
+```python
+import pandas as pd
+import os
+
+def filtrar_datos_csv(nombre_archivo_entrada, columna_filtro, valor_limite):
+    """
+    Carga un archivo CSV, filtra los datos de una columna numérica 
+    por un valor límite y guarda el resultado en un nuevo CSV.
+
+    :param nombre_archivo_entrada: El nombre/ruta del archivo CSV a leer.
+    :param columna_filtro: El nombre de la columna numérica por la que se filtrará.
+    :param valor_limite: El valor numérico mínimo (o máximo) para la condición de filtro.
+    :return: True si el proceso fue exitoso, False en caso contrario.
+    """
+    
+    # 1. Manejo de errores para la lectura del CSV
+    try:
+        # # Cargar el archivo CSV en un DataFrame de Pandas
+        # # `sep=','` es el delimitador por defecto, pero se especifica para claridad.
+        df = pd.read_csv(nombre_archivo_entrada, sep=',')
+        print(f"# Archivo '{nombre_archivo_entrada}' cargado con {len(df)} filas.")
+        
+    except FileNotFoundError:
+        print(f"Error: El archivo de entrada '{nombre_archivo_entrada}' no fue encontrado.")
+        return False
+    except pd.errors.EmptyDataError:
+        print(f"Error: El archivo '{nombre_archivo_entrada}' está vacío o solo contiene el encabezado.")
+        return False
+    except Exception as e:
+        print(f"Error al cargar el CSV: {e}")
+        return False
+
+    # 2. Verificar la columna de filtro
+    if columna_filtro not in df.columns:
+        print(f"Error: La columna de filtro '{columna_filtro}' no existe en el archivo CSV.")
+        print(f"# Columnas disponibles: {list(df.columns)}")
+        return False
+
+    # 3. Aplicar la condición de filtro
+    # # Definimos la condición. Aquí filtramos por valores *mayores o iguales* al límite.
+    # # La columna debe ser numérica para esta condición.
+    try:
+        # # Convertir la columna de filtro a tipo numérico (float) para asegurar la comparación.
+        df[columna_filtro] = pd.to_numeric(df[columna_filtro], errors='coerce')
+        # # Crear la máscara booleana (True/False)
+        condicion = df[columna_filtro] >= valor_limite
+        
+        # # Aplicar la máscara para obtener el DataFrame filtrado
+        df_filtrado = df[condicion].copy() # Usamos .copy() para evitar SettingWithCopyWarning
+        
+        filas_filtradas = len(df_filtrado)
+        
+        print(f"# Se aplicó el filtro en la columna '{columna_filtro}': Valores >= {valor_limite}")
+        print(f"# Filas originales: {len(df)} | Filas resultantes: {filas_filtradas}")
+        
+        if filas_filtradas == 0:
+            print("# Advertencia: Ninguna fila cumplió con la condición de filtro.")
+            return True
+        
+    except TypeError:
+        print(f"Error: La columna '{columna_filtro}' no es de un tipo numérico válido para esta condición.")
+        return False
+    except Exception as e:
+        print(f"Error durante la aplicación del filtro: {e}")
+        return False
+
+    # 4. Guardar el DataFrame filtrado en un nuevo archivo CSV
+    nombre_archivo_salida = f"datos_filtrados_{columna_filtro}.csv"
+    try:
+        # # Guardar el DataFrame filtrado. `index=False` evita escribir el índice de Pandas.
+        df_filtrado.to_csv(nombre_archivo_salida, index=False, encoding='utf-8')
+        print(f"\n# Éxito: Los resultados se guardaron en '{nombre_archivo_salida}'")
+        return True
+        
+    except Exception as e:
+        print(f"Error al escribir el archivo de salida CSV: {e}")
+        return False
+
+
+# --- Bloque Principal de Ejecución ---
+
+# # 1. Define las variables de configuración
+ARCHIVO_ENTRADA = "ventas_mensuales.csv"
+COLUMNA_A_FILTRAR = "MontoVenta"
+UMBRAL_DE_FILTRO = 500.00
+
+# # 2. Llama a la función principal
+print("# --- INICIO DEL FILTRO DE DATOS ---")
+exito = filtrar_datos_csv(ARCHIVO_ENTRADA, COLUMNA_A_FILTRAR, UMBRAL_DE_FILTRO)
+
+# # 3. Muestra el resultado final
+if exito:
+    print("# Proceso de filtrado completado con éxito.")
+else:
+    print("# El proceso de filtrado falló.")
+print("# ----------------------------------")
+
+# ---
+
+# # A continuación se muestra cómo debería verse el archivo de entrada para el ejemplo:
+# # ventas_mensuales.csv (Copia y pega esto en un archivo llamado 'ventas_mensuales.csv'):
+# # ID,Producto,MontoVenta,Region
+# # 1,Laptop,1200.50,Norte
+# # 2,Mouse,15.99,Sur
+# # 3,Teclado,85.00,Este
+# # 4,Monitor,650.25,Oeste
+# # 5,Webcam,45.99,Norte
+# # 6,Impresora,450.00,Sur
+# # 7,Servidor,2100.75,Este
+# # 8,Auriculares,105.50,Oeste
+
+# # Si se ejecuta con el ejemplo, el resultado de `datos_filtrados_MontoVenta.csv` solo contendrá las filas con MontoVenta >= 500.00.
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala Pandas:** Si no lo tienes, abre tu terminal y ejecuta:
+    ```bash
+    pip install pandas
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `filtro_pandas.py`.
+3.  **Crea el archivo CSV de entrada:** En la **misma carpeta**, crea un archivo llamado `ventas_mensuales.csv` y añade los datos de ejemplo que están al final del código (o tus propios datos, asegurándote de que la columna `MontoVenta` exista).
+4.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python filtro_pandas.py
+    ```
+
+# El script creará un nuevo archivo llamado `datos_filtrados_MontoVenta.csv` con las filas que cumplan la condición.
+

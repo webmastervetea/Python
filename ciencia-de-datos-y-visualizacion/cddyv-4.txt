@@ -1,0 +1,125 @@
+Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# El programa lee un archivo, procesa el texto para limpiarlo y luego cuenta la ocurrencia de cada palabra.
+
+# Utiliza el módulo `collections` para la tarea de contar de forma eficiente.
+
+```python
+import re
+from collections import Counter
+import string
+
+def contador_de_palabras(nombre_archivo):
+    """
+    Cuenta la frecuencia de cada palabra en un archivo de texto.
+
+    :param nombre_archivo: El nombre (ruta) del archivo de texto a procesar.
+    :return: Un objeto Counter con las palabras y sus frecuencias, o None si hay un error.
+    """
+    # Manejo de errores en caso de que el archivo no exista o no se pueda leer
+    try:
+        # Abre el archivo en modo lectura ('r') y codificación UTF-8
+        with open(nombre_archivo, 'r', encoding='utf-8') as archivo:
+            # Lee todo el contenido del archivo
+            texto = archivo.read()
+    except FileNotFoundError:
+        # Mensaje si el archivo no se encuentra
+        print(f"Error: El archivo '{nombre_archivo}' no fue encontrado.")
+        return None
+    except Exception as e:
+        # Mensaje para otros errores de lectura
+        print(f"Error al leer el archivo: {e}")
+        return None
+
+    # --- Preprocesamiento del texto ---
+    
+    # 1. Convertir todo el texto a minúsculas para tratar 'Palabra' y 'palabra' como la misma
+    # # Esto es crucial para un conteo de frecuencia preciso.
+    texto_minusculas = texto.lower()
+
+    # 2. Eliminar signos de puntuación. Se reemplazan por un espacio.
+    # # Se construye una tabla de traducción para reemplazar la puntuación con None (eliminación efectiva).
+    # # Se excluyen los guiones (hiphen) si deseas mantener palabras compuestas, pero
+    # # # para un conteo simple, es mejor eliminarlos o tratarlos. Aquí se eliminan.
+    traductor = str.maketrans('', '', string.punctuation)
+    texto_sin_puntuacion = texto_minusculas.translate(traductor)
+    
+    # # Alternativa para una limpieza más estricta (usando regex):
+    # # texto_limpio = re.sub(r'[^\w\s]', '', texto_minusculas) # Esto mantiene guiones bajos
+
+    # 3. Dividir el texto en una lista de palabras.
+    # # La función `split()` sin argumentos divide por cualquier espacio en blanco (espacios, saltos de línea, tabuladores).
+    palabras = texto_sin_puntuacion.split()
+
+    # 4. Contar la frecuencia de las palabras
+    # # `collections.Counter` es la forma más eficiente y legible de hacer esto en Python.
+    frecuencias = Counter(palabras)
+
+    # Devolver el objeto Counter
+    return frecuencias
+
+# --- Bloque Principal de Ejecución ---
+
+# # Define el nombre del archivo de entrada.
+nombre_del_archivo = "mi_documento.txt"
+
+# # Llama a la función principal.
+conteo = contador_de_palabras(nombre_del_archivo)
+
+# # Si el conteo fue exitoso (no es None), imprime los resultados.
+if conteo:
+    # # El método `most_common()` devuelve una lista de tuplas (palabra, frecuencia)
+    # # # ordenada por frecuencia, de mayor a menor.
+    print(f"\n# Resultados del análisis de frecuencia de palabras en '{nombre_del_archivo}':")
+    print("# ----------------------------------------------------")
+    
+    # # Itera sobre las palabras y frecuencias e imprime el resultado
+    # # # Se usa un slice `[:10]` para mostrar solo las 10 palabras más comunes.
+    palabras_mas_comunes = conteo.most_common(10)
+    
+    # # Si hay palabras para mostrar:
+    if palabras_mas_comunes:
+        # # Imprime un encabezado para las palabras más comunes
+        print("# Las 10 palabras más comunes son:")
+        for palabra, frecuencia in palabras_mas_comunes:
+            # # Imprime cada palabra y su conteo
+            print(f"# -> '{palabra}': {frecuencia} veces")
+
+        # # También se puede imprimir el conteo total de palabras únicas:
+        print(f"\n# El total de palabras únicas encontradas es: {len(conteo)}")
+    else:
+        # # Mensaje si el archivo estaba vacío después de la limpieza
+        print("# El archivo estaba vacío o no contenía palabras después del preprocesamiento.")
+
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+# Para que el programa funcione, necesitas crear un archivo de texto en la misma carpeta donde guardaste el script de Python.
+
+1.  **Guarda el código:** Guarda el código anterior en un archivo llamado, por ejemplo, `contador.py`.
+2.  **Crea el archivo de texto:** En la **misma carpeta** que `contador.py`, crea un archivo de texto y nómbralo `mi_documento.txt` (este es el nombre predeterminado en la línea `nombre_del_archivo = "mi_documento.txt"`).
+3.  **Añade texto:** Escribe o pega algún texto en `mi_documento.txt`. Por ejemplo:
+    > La manzana es una fruta. La fruta roja es deliciosa. La la.
+4.  **Ejecuta:** Abre tu terminal o línea de comandos, navega hasta la carpeta donde guardaste los archivos y ejecuta el script con:
+    ```bash
+    python contador.py
+    ```
+
+# El resultado para el ejemplo anterior debería ser:
+
+# \-\> 'la': 3 veces
+
+# \-\> 'fruta': 2 veces
+
+# \-\> 'es': 2 veces
+
+# \-\> 'manzana': 1 veces
+
+# \-\> 'una': 1 veces
+
+# \-\> 'roja': 1 veces
+
+# \-\> 'deliciosa': 1 veces
+
+¿Te gustaría que te ayudara a **crear un pequeño archivo de texto** de ejemplo o a **modificar el código** para contar las N palabras más comunes que tú elijas?

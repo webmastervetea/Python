@@ -1,0 +1,116 @@
+# Soporte: https://www.linkedin.com/in/oscarlizarragag/
+
+# Este script utiliza la librería estándar de Python `requests` para hacer la llamada a la API
+
+# \# externa de Agify.io.
+
+```python
+import requests
+import json
+import re # Módulo para la limpieza del nombre
+
+def clasificar_edad_por_nombre(nombre):
+    """
+    Estima la edad de una persona utilizando la API de Agify.io.
+
+    :param nombre: El nombre a consultar (solo el nombre de pila).
+    :return: Un diccionario con los datos de la respuesta (nombre, edad, conteo),
+             o None si ocurre un error.
+    """
+    # 1. Limpieza y validación del nombre
+    # # Eliminar espacios en blanco alrededor y asegurar que solo haya caracteres alfabéticos
+    nombre_limpio = nombre.strip()
+    
+    # # Agify.io funciona mejor con el primer nombre de pila
+    # # Si hay espacios, solo toma la primera palabra (el primer nombre)
+    if ' ' in nombre_limpio:
+        nombre_de_pila = nombre_limpio.split()[0]
+    else:
+        nombre_de_pila = nombre_limpio
+
+    # # Validar que el nombre no esté vacío después de la limpieza
+    if not nombre_de_pila or not re.match("^[a-zA-Z]+$", nombre_de_pila):
+        print("# Error: Por favor, introduce un nombre válido (solo letras).")
+        return None
+
+    # 2. Definición de la URL de la API
+    # # La API de Agify.io devuelve la edad estimada y la cantidad de muestras (count)
+    API_URL = f"https://api.agify.io/?name={nombre_de_pila}"
+
+    print(f"# Consultando la edad estimada para el nombre: '{nombre_de_pila}'...")
+
+    # 3. Realizar la solicitud HTTP
+    try:
+        # # Realiza una solicitud GET a la API
+        respuesta = requests.get(API_URL, timeout=10) # Se añade un tiempo de espera (timeout)
+
+        # # Lanza un error HTTP si la respuesta no fue 200 (éxito)
+        respuesta.raise_for_status()
+
+        # # Convertir la respuesta JSON a un diccionario de Python
+        datos = respuesta.json()
+
+        # 4. Procesar los datos
+        # # Agify.io devuelve {"name": "...", "age": N, "count": M}
+        
+        # # Si el conteo (count) es 0, significa que la API no tiene datos para ese nombre
+        if datos.get('count', 0) == 0:
+            print(f"# Lo sentimos, no hay datos suficientes para estimar la edad de '{nombre_de_pila}'.")
+            return None
+        
+        # # Retorna el diccionario de datos
+        return datos
+
+    except requests.exceptions.RequestException as e:
+        # # Manejo de errores de conexión (DNS, timeout, HTTP)
+        print(f"# Error al conectar con la API de Agify.io: {e}")
+        return None
+    except json.JSONDecodeError:
+        # # Manejo de errores si la respuesta no es un JSON válido
+        print("# Error: La respuesta de la API no es un formato JSON válido.")
+        return None
+
+
+# --- Bloque Principal de Ejecución ---
+
+# # Pide al usuario que introduzca un nombre
+nombre_usuario = input("\n# Introduce un nombre de pila (Ej: María, David, Sophia): ")
+
+print("# ------------------------------------------")
+
+# # Llama a la función principal
+datos_estimados = clasificar_edad_por_nombre(nombre_usuario)
+
+# # Muestra los resultados si la consulta fue exitosa
+if datos_estimados:
+    nombre_obtenido = datos_estimados.get('name')
+    edad_estimada = datos_estimados.get('age')
+    conteo_muestras = datos_estimados.get('count')
+    
+    # # La API devuelve la edad como `None` si no tiene un valor, incluso si el conteo > 0
+    if edad_estimada is not None:
+        print(f"\n# Análisis completado para: {nombre_obtenido.capitalize()}")
+        print(f"# Edad Estimada: **{edad_estimada} años**")
+        print(f"# Basado en {conteo_muestras} muestras.")
+    else:
+        # # Caso de error poco común donde count > 0 pero age es None
+        print("# No se pudo obtener la edad estimada a pesar de tener muestras.")
+
+print("# ------------------------------------------")
+```
+
+## 📝 Instrucciones para Usar el Programa
+
+1.  **Instala la librería `requests`:** Esta librería no siempre viene preinstalada con Python. Abre tu terminal y ejecuta:
+    ```bash
+    pip install requests
+    ```
+2.  **Guarda el código:** Guarda el código Python anterior en un archivo, por ejemplo, `clasificador_edad.py`.
+3.  **Ejecuta el script:** Abre tu terminal y ejecuta:
+    ```bash
+    python clasificador_edad.py
+    ```
+
+# El programa te pedirá que introduzcas un nombre y luego te mostrará la edad promedio que Agify.io ha calculado para ese nombre.
+
+¿Te gustaría que **añadiera la posibilidad de consultar también el género estimado** (usando Genderize.io) o que lo **modificara para leer una lista de nombres** desde un archivo?
